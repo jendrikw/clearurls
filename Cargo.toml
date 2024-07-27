@@ -1,0 +1,21 @@
+[package]
+name = "clearurls"
+version = "0.0.1"
+edition = "2021"
+authors = ["jendrikw"]
+description = "Clear URLS from tracking parameters with crowd-sourced rules from https://clearurls.xyz"
+categories = ["network-programming", "web-programming"]
+keywords = ["clean", "clear", "url"]
+repository = "https://github.com/jendrikw/clearurls"
+license = "LGPL-3.0-only"
+
+[features]
+std = ["serde/std", "serde_json/std", "regex/std"]
+default = ["std"]
+
+[dependencies]
+serde = { version = "1.0.204", default-features = false, features = ["derive", "alloc"] }
+serde_json = { version = "1.0.120" , default-features = false, features = ["alloc"]}
+regex = { version = "1.10.5", default-features = false, features = ["unicode"] }
+percent-encoding = { version = "2.3.1" , default-features = false, features = ["alloc"]}
+url = "2.5.2"
