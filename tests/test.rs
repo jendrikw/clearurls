@@ -1,0 +1,62 @@
+use clearurls::UrlCleaner;
+
+#[test]
+fn it_works() {
+    let cleaner = UrlCleaner::from_embedded_rules().unwrap();
+
+    let test = |original: &str, expected: &str| {
+        let result = cleaner.clear_url(original).unwrap().into_owned();
+        assert_eq!(result, expected);
+    };
+
+    test(
+        "https://deezer.com/track/891177062?utm_source=deezer",
+        "https://deezer.com/track/891177062",
+    );
+
+    test(
+        "https://www.google.com/url?q=https://pypi.org/project/Unalix",
+        "https://pypi.org/project/Unalix",
+    );
+
+    test(
+        "https://www.google.com/amp/s/de.statista.com/infografik/amp/22496/anzahl-der-gesamten-positiven-corona-tests-und-positivenrate/",
+        "http://de.statista.com/infografik/amp/22496/anzahl-der-gesamten-positiven-corona-tests-und-positivenrate/",
+    );
+
+    test(
+        "https://www.amazon.com/gp/B08CH7RHDP/ref=as_li_ss_tl",
+        "https://www.amazon.com/gp/B08CH7RHDP",
+    );
+
+    test(
+        "https://myaccount.google.com/?utm_source=google",
+        "https://myaccount.google.com/?utm_source=google",
+    );
+
+    test("http://example.com/?p1=&p2=", "http://example.com/?p1=&p2=");
+
+    test(
+        "http://example.com/?p1=value&p1=othervalue",
+        "http://example.com/?p1=value&p1=othervalue",
+    );
+
+    test("http://example.com/?&&&&", "http://example.com/");
+
+    // https://github.com/AmanoTeam/Unalix-nim/issues/5
+    test(
+        "https://docs.julialang.org/en/v1/stdlib/REPL/#Key-bindings",
+        "https://docs.julialang.org/en/v1/stdlib/REPL/#Key-bindings",
+    );
+
+    test(
+        "https://www.amazon.com/Kobo-Glare-Free-Touchscreen-ComfortLight-Adjustable/dp/B0BCXLQNCC/ref=pd_ci_mcx_mh_mcx_views_0?pd_rd_w=Dx5dF&content-id=amzn1.sym.225b4624-972d-4629-9040-f1bf9923dd95%3Aamzn1.symc.40e6a10e-cbc4-4fa5-81e3-4435ff64d03b&pf_rd_p=225b4624-972d-4629-9040-f1bf9923dd95&pf_rd_r=A7JSDJGYR33BN5GRCV7V&pd_rd_wg=xW6Yf&pd_rd_r=4b8a3532-9e28-4857-a929-5e572d2c765f&pd_rd_i=B0BCXLQNCC",
+        "https://www.amazon.com/Kobo-Glare-Free-Touchscreen-ComfortLight-Adjustable/dp/B0BCXLQNCC",
+    );
+
+    // should not be changed
+    test(
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1144182",
+        "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1144182",
+    );
+}
