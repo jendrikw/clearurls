@@ -9,3 +9,5 @@ Testcases are from
 
 - <https://github.com/icealtria/Unalix-Rev/blob/master/src/tests>
 - <https://github.com/stringertheory/clean-links/tree/main/tests>
+
+data.minify.json file is from <https://github.com/ClearURLs/Rules>
