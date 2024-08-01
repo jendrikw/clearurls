@@ -1,5 +1,6 @@
 # clearurls
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/jendrikw/clearurls/rust.yml)
 [![Crate](https://img.shields.io/crates/v/clearurls.svg)](https://crates.io/crates/clearurls)
 [![Docs](https://docs.rs/clearurls/badge.svg)](https://docs.rs/clearurls)
 
