@@ -25,9 +25,10 @@
 //! This crate provides a solution to remove tracking parameters and other nuisance from URLs.
 //!
 //! In order to detect such parameters, this crates uses crowdsourced *Rules* from the
-//! [ClearURLs browser extension](https://rust-lang.github.io/rust-clippy/master/index.html#/doc_markdown).
+//! [ClearURLs browser extension](https://clearurls.xyz/).
 //!
-//! A set of rules is included in this library, but you can supply your own.
+//! A set of rules is included in this library, but you can supply your own. Refer to the
+//! [ClearURLs documentation](https://docs.clearurls.xyz/1.26.1/specs/rules/) for specific syntax and semantics.
 //!
 //! # Example
 //! ```
@@ -39,6 +40,10 @@
 //! # Ok(())
 //! # }
 //! ```
+
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+extern {}
 
 extern crate alloc;
 #[cfg(feature = "std")]
