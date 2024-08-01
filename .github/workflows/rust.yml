@@ -1,0 +1,37 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        channel:
+          - stable
+          - beta
+          - nightly
+        features:
+          - "--no-default-features --features=''"
+          - "--all-features"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Rust Toolchain
+      run: rustup default ${{ matrix.channel }} && rustup component add clippy
+    - name: Build
+      run: cargo build --verbose ${{ matrix.features }}
+    - name: Run tests
+      run: cargo test --verbose ${{ matrix.features }}
+    - name: Build docs
+      run: cargo doc --verbose ${{ matrix.features }}
+    - name: Build docs
+      run: cargo clippy --verbose ${{ matrix.features }}
+      
