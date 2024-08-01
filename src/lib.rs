@@ -33,7 +33,7 @@
 //! # Example
 //! ```
 //! # use clearurls::UrlCleaner;
-//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! # fn main() -> Result<(), clearurls::Error> {
 //! let cleaner = UrlCleaner::from_embedded_rules()?;
 //! let res = cleaner.clear_url("https://example.com/test?utm_source=abc")?;
 //! assert_eq!(res, "https://example.com/test");
@@ -52,7 +52,6 @@ extern crate std;
 use alloc::borrow::Cow;
 use core::fmt::{Display, Formatter};
 use core::str::Utf8Error;
-use std::fs::File;
 use regex::Regex;
 use url::ParseError;
 
@@ -77,7 +76,7 @@ impl UrlCleaner {
     /// See [`Error`]
     #[cfg(feature = "std")]
     pub fn from_rules_path(path: &std::path::Path) -> Result<Self, Error> {
-        Self::from_rules_file(File::open(path)?)
+        Self::from_rules_file(std::fs::File::open(path)?)
     }
 
     /// Construct a [`UrlCleaner`] with rules from a [reader][std::io::Read], most often a [`File`]
