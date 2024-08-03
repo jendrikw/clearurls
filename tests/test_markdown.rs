@@ -62,6 +62,6 @@ fn test_markdown() {
         "<p>This is a <a href=\"http://example.com/\">markdown link</a>, and another: <a href=\"http://example.com/\">http://example.com/</a></p>\n".to_string(),
     );
 
-    let err = cleaner.clear_markdown(&mut parser.parse("<ftp://example..com>")).unwrap_err();
+    let err = cleaner.clear_markdown(&mut parser.parse("<ftp://example.%com>")).unwrap_err();
     assert!(matches!(err, Error::UrlSyntax(_)));
 }
