@@ -1,7 +1,7 @@
 use clearurls::UrlCleaner;
 
 #[test]
-fn it_works() {
+fn test_single_url() {
     let cleaner = UrlCleaner::from_embedded_rules().unwrap();
 
     let test = |original: &str, expected: &str| {
@@ -14,8 +14,9 @@ fn it_works() {
         "https://deezer.com/track/891177062",
     );
 
+    // double url encoded parameter
     test(
-        "https://www.google.com/url?q=https://pypi.org/project/Unalix",
+        "https://www.google.com/url?q=https%253A%252F%252Fpypi.org%252Fproject%252FUnalix",
         "https://pypi.org/project/Unalix",
     );
 
@@ -58,5 +59,11 @@ fn it_works() {
     test(
         "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1144182",
         "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1144182",
+    );
+    test("javascript:void(0)", "javascript:void(0)");
+    test("data:,Hello%2C%20World%21", "data:,Hello%2C%20World%21");
+    test(
+        "data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==",
+        "data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==",
     );
 }

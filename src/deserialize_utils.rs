@@ -96,3 +96,50 @@ where
 
     d.deserialize_map(MapAsVecVisitor(PhantomData))
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::deserialize_utils::*;
+    use serde_json::error::Category;
+    use serde_json::json;
+
+    #[test]
+    fn test_deserialize_regex() {
+        let regex = deserialize_regex(json!("a")).unwrap();
+        assert!(regex.is_match("A"));
+        let error = deserialize_regex(json!("[")).unwrap_err();
+        assert_eq!(error.classify(), Category::Data);
+        let error = deserialize_regex(json!(true)).unwrap_err();
+        assert_eq!(error.classify(), Category::Data);
+        let error = deserialize_regex(json!([])).unwrap_err();
+        assert_eq!(error.classify(), Category::Data);
+    }
+
+    #[test]
+    fn test_deserialize_regex_set_error() {
+        let error = deserialize_regex_set(json!([".*", 1])).unwrap_err();
+        assert_eq!(error.classify(), Category::Data);
+        let error = deserialize_regex_set(json!("")).unwrap_err();
+        assert_eq!(error.classify(), Category::Data);
+        let error = deserialize_regex_set(json!(["["])).unwrap_err();
+        assert_eq!(error.classify(), Category::Data);
+    }
+
+    #[test]
+    fn test_deserialize_regex_vec_error() {
+        let error = deserialize_regex_vec(json!([".*", 1])).unwrap_err();
+        assert_eq!(error.classify(), Category::Data);
+        let error = deserialize_regex_vec(json!("")).unwrap_err();
+        assert_eq!(error.classify(), Category::Data);
+        let error = deserialize_regex_vec(json!(["["])).unwrap_err();
+        assert_eq!(error.classify(), Category::Data);
+    }
+
+    #[test]
+    fn test_deserialize_map_as_vec_error() {
+        let error = deserialize_map_as_vec::<_, bool>(json!(true)).unwrap_err();
+        assert_eq!(error.classify(), Category::Data);
+        let error = deserialize_map_as_vec::<_, bool>(json!({"a": 5})).unwrap_err();
+        assert_eq!(error.classify(), Category::Data);
+    }
+}

@@ -43,7 +43,7 @@
 
 #[cfg(doctest)]
 #[doc = include_str!("../README.md")]
-extern {}
+extern "C" {}
 
 extern crate alloc;
 #[cfg(feature = "std")]
@@ -59,6 +59,8 @@ use rules::Rules;
 
 mod deserialize_utils;
 mod rules;
+#[cfg(test)]
+mod tests;
 
 /// A [`UrlCleaner`] can remove tracking parameters from URLs.
 ///
@@ -144,6 +146,57 @@ impl UrlCleaner {
 
         Ok(result)
     }
+
+    #[cfg(feature = "markdown-it")]
+    pub fn clear_markdown(&self, doc: &mut markdown_it::Node) -> Result<(), Error> {
+        use markdown_it::parser::inline::Text;
+        use markdown_it::plugins::cmark::inline::autolink::Autolink;
+        use markdown_it::plugins::cmark::inline::image::Image;
+        use markdown_it::plugins::cmark::inline::link::Link;
+        use markdown_it::plugins::extra::linkify::Linkified;
+        use markdown_it::Node;
+
+        fn replace_url(cleaner: &UrlCleaner, url: &mut alloc::string::String) -> Result<(), Error> {
+            match cleaner.clear_url(url)? {
+                Cow::Borrowed(_) => {}
+                Cow::Owned(new_url) => {
+                    *url = new_url;
+                }
+            }
+            Ok(())
+        }
+
+        fn callback(cleaner: &UrlCleaner, node: &mut Node) -> Result<(), Error> {
+            if let Some(link) = node.cast_mut::<Autolink>() {
+                replace_url(cleaner, &mut link.url)?;
+                node.children = std::vec![Node::new(Text {
+                    content: link.url.clone()
+                })];
+            }
+            if let Some(link) = node.cast_mut::<Linkified>() {
+                replace_url(cleaner, &mut link.url)?;
+                node.children = std::vec![Node::new(Text {
+                    content: link.url.clone()
+                })];
+            }
+            if let Some(link) = node.cast_mut::<Link>() {
+                replace_url(cleaner, &mut link.url)?;
+            }
+            if let Some(link) = node.cast_mut::<Image>() {
+                replace_url(cleaner, &mut link.url)?;
+            }
+            Ok(())
+        }
+
+        let mut result = Ok(());
+        doc.walk_mut(|node, _| {
+            if let Err(e) = callback(self, node) {
+                result = Err(e);
+            };
+        });
+
+        result
+    }
 }
 
 /// Various errors that can happen while cleaning a URL
@@ -213,14 +266,7 @@ impl std::error::Error for Error {
             Error::RuleSyntax(e) => Some(e),
             Error::UrlSyntax(e) => Some(e),
             Error::RedirectionHasNoCapturingGroup(_) => None,
-            Error::PercentDecodeUtf8Error(e) => Some(e)
+            Error::PercentDecodeUtf8Error(e) => Some(e),
         }
     }
 }
-
-
-const _: () = {
-    const fn assert_auto_traits<T: Send + Sync>() {}
-    assert_auto_traits::<UrlCleaner>();
-    assert_auto_traits::<Error>();
-};

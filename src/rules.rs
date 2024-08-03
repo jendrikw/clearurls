@@ -24,17 +24,17 @@ pub(crate) struct Rules {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Provider {
     #[serde(deserialize_with = "deserialize_regex")]
-    url_pattern: Regex,
+    pub(crate) url_pattern: Regex,
     #[serde(default, deserialize_with = "deserialize_regex_vec")]
-    rules: Vec<Regex>,
+    pub(crate) rules: Vec<Regex>,
     #[serde(default, deserialize_with = "deserialize_regex_vec")]
-    raw_rules: Vec<Regex>,
+    pub(crate) raw_rules: Vec<Regex>,
     #[serde(default, deserialize_with = "deserialize_regex_vec")]
-    referral_marketing: Vec<Regex>,
+    pub(crate) referral_marketing: Vec<Regex>,
     #[serde(default, deserialize_with = "deserialize_regex_set")]
-    exceptions: RegexSet,
+    pub(crate) exceptions: RegexSet,
     #[serde(default, deserialize_with = "deserialize_regex_vec")]
-    redirections: Vec<Regex>,
+    pub(crate) redirections: Vec<Regex>,
 }
 
 impl Provider {
@@ -103,14 +103,17 @@ impl Provider {
     }
 }
 
-fn serialize_params<'a>(mut params: impl Iterator<Item=&'a (Cow<'a, str>, Cow<'a, str>)>) -> Option<String> {
+fn serialize_params<'a>(
+    mut params: impl Iterator<Item = &'a (Cow<'a, str>, Cow<'a, str>)>,
+) -> Option<String> {
     let first2: Vec<_> = params.by_ref().take(2).collect();
     let ret = match &first2[..] {
         [] => String::new(),
         [anchor] if anchor.1 == "" => anchor.0.clone().into_owned(),
-        _ => {
-            form_urlencoded::Serializer::new(String::new()).extend_pairs(first2).extend_pairs(params).finish()
-        }
+        _ => form_urlencoded::Serializer::new(String::new())
+            .extend_pairs(first2)
+            .extend_pairs(params)
+            .finish(),
     };
     Some(ret).filter(|r| !r.is_empty())
 }
@@ -118,18 +121,25 @@ fn serialize_params<'a>(mut params: impl Iterator<Item=&'a (Cow<'a, str>, Cow<'a
 fn repeatedly_urldecode(s: &str) -> Result<Cow<'_, str>, Error> {
     let mut before = Cow::Borrowed(s);
     loop {
-        let after = percent_decode_str(s).decode_utf8()?;
-        if after == before {
-            return if after.starts_with("http") {
-                Ok(after)
-            } else {
-                Ok(Cow::Owned(["http://", &*after].join("")))
-            };
+        let after = percent_decode_str(&before).decode_utf8()?;
+        match after {
+            Cow::Borrowed(_) => {
+                // unchanged, so return now
+                return if after.starts_with("http") {
+                    Ok(before)
+                } else {
+                    Ok(Cow::Owned(["http://", &*after].join("")))
+                };
+            }
+            Cow::Owned(after) => {
+                before = Cow::Owned(after);
+            }
         }
-        before = after;
     }
 }
 
 fn is_full_match(regex: &Regex, haystack: &str) -> bool {
-    regex.find(haystack).is_some_and(|m| m.len() == haystack.len())
+    regex
+        .find(haystack)
+        .is_some_and(|m| m.len() == haystack.len())
 }

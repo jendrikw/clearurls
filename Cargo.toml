@@ -15,7 +15,11 @@ default = ["std"]
 
 [dependencies]
 serde = { version = "1.0.204", default-features = false, features = ["derive", "alloc"] }
-serde_json = { version = "1.0.120" , default-features = false, features = ["alloc"]}
+serde_json = { version = "1.0.122" , default-features = false, features = ["alloc"]}
 regex = { version = "1.10.5", default-features = false, features = ["unicode"] }
 percent-encoding = { version = "2.3.1" , default-features = false, features = ["alloc"]}
 url = "2.5.2"
+markdown-it = { version = "0.6.1", default-features = false, features = ["linkify"], optional = true }
+
+[dev-dependencies]
+tempfile = "3.11.0"
