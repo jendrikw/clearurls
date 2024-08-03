@@ -147,8 +147,20 @@ impl UrlCleaner {
         Ok(result)
     }
 
+    /// Clean all URLs in a Markdown document. This affects all kinds of URLs, like
+    /// - proper Markdown Links
+    /// - auto links (links inside angle brackets)
+    /// - links to images
+    /// - bare links with no extra markup.
+    ///
+    /// The document will be modified in-place.
+    ///
+    /// # Errors
+    /// The algorithm continues with the rest of the document if an error occurs.
+    /// The return value is `Ok(())` if there were no errors.
+    /// Otherwise, the list of errors is returned as the `Err` value.
     #[cfg(feature = "markdown-it")]
-    pub fn clear_markdown(&self, doc: &mut markdown_it::Node) -> Result<(), Error> {
+    pub fn clear_markdown(&self, doc: &mut markdown_it::Node) -> Result<(), alloc::vec::Vec<Error>> {
         use markdown_it::parser::inline::Text;
         use markdown_it::plugins::cmark::inline::autolink::Autolink;
         use markdown_it::plugins::cmark::inline::image::Image;
@@ -188,14 +200,18 @@ impl UrlCleaner {
             Ok(())
         }
 
-        let mut result = Ok(());
+        let mut result = alloc::vec![];
         doc.walk_mut(|node, _| {
             if let Err(e) = callback(self, node) {
-                result = Err(e);
+                result.push(e);
             };
         });
 
-        result
+        if result.is_empty() {
+            Ok(())
+        } else {
+            Err(result)
+        }
     }
 }
 
