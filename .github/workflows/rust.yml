@@ -25,11 +25,11 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Install Rust Toolchain
-      run: rustup default ${{ matrix.channel }} && rustup component add clippy
+      run: rustup default ${{ matrix.channel }} && rustup component add clippy && cargo install cargo-llvm-cov
     - name: Build
       run: cargo build --verbose --no-default-features ${{ matrix.features }}
     - name: Run tests
-      run: cargo test --verbose --no-default-features ${{ matrix.features }}
+      run: cargo llvm-cov test --text --verbose --no-default-features ${{ matrix.features }}
     - name: Build docs
       run: cargo doc --verbose --no-default-features --no-deps ${{ matrix.features }}
     - name: Run clippy
