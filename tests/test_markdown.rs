@@ -63,5 +63,5 @@ fn test_markdown() {
     );
 
     let err = cleaner.clear_markdown(&mut parser.parse("<ftp://example.%com>")).unwrap_err();
-    assert!(matches!(err, Error::UrlSyntax(_)));
+    assert!(matches!(err[..], [Error::UrlSyntax(_)]));
 }
