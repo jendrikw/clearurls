@@ -1,24 +1,58 @@
+// Rustc lints
+#![forbid(unsafe_code)]
 #![warn(future_incompatible)]
 #![warn(keyword_idents)]
 #![warn(let_underscore)]
+#![warn(missing_copy_implementations)]
+#![warn(missing_debug_implementations)]
+#![warn(missing_docs)]
+#![warn(non_ascii_idents)]
 #![warn(nonstandard_style)]
+#![warn(noop_method_call)]
 #![warn(refining_impl_trait)]
 #![warn(rust_2018_compatibility)]
 #![warn(rust_2018_idioms)]
 #![warn(rust_2021_compatibility)]
 #![warn(rust_2024_compatibility)]
 #![warn(unused)]
-#![warn(missing_debug_implementations)]
-#![warn(missing_docs)]
-#![warn(clippy::pedantic)]
-#![warn(clippy::style)]
-#![warn(clippy::correctness)]
-#![warn(clippy::suspicious)]
-#![warn(clippy::complexity)]
-#![warn(clippy::perf)]
+#![warn(unused_crate_dependencies)]
+#![warn(unused_extern_crates)]
+#![warn(unused_import_braces)]
+
+// Clippy categories
 #![warn(clippy::cargo)]
+#![warn(clippy::complexity)]
+#![warn(clippy::correctness)]
+#![warn(clippy::nursery)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::perf)]
+#![warn(clippy::style)]
+#![warn(clippy::suspicious)]
+
+// selected clippy lints from nursery and restriction
+#![allow(clippy::redundant_pub_crate)] // I like it my way
+#![warn(clippy::cognitive_complexity)]
+#![warn(clippy::dbg_macro)]
+#![warn(clippy::debug_assert_with_mut_call)]
+#![warn(clippy::empty_line_after_outer_attr)]
+#![warn(clippy::empty_structs_with_brackets)]
+#![warn(clippy::float_cmp_const)]
+#![warn(clippy::float_equality_without_abs)]
+#![warn(clippy::missing_const_for_fn)]
+#![warn(clippy::mod_module_files)]
+#![warn(clippy::option_if_let_else)]
+#![warn(clippy::print_stderr)]
+#![warn(clippy::print_stdout)]
+#![warn(clippy::suspicious_operation_groupings)]
+#![warn(clippy::unseparated_literal_suffix)]
+#![warn(clippy::use_debug)]
+#![warn(clippy::useless_let_if_seq)]
+#![warn(clippy::wildcard_dependencies)]
+
+// Rustdoc lints
 #![warn(rustdoc::broken_intra_doc_links)]
 #![warn(rustdoc::missing_crate_level_docs)]
+
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
@@ -116,6 +150,7 @@ impl UrlCleaner {
     /// While they can be considered to be tracking, they are useful on occasion.
     /// The default is `false`, meaning these are kept.
     #[must_use]
+    #[allow(clippy::missing_const_for_fn)]
     pub fn strip_referral_marketing(mut self, value: bool) -> Self {
         self.strip_referral_marketing = value;
         self
@@ -181,13 +216,13 @@ impl UrlCleaner {
         fn callback(cleaner: &UrlCleaner, node: &mut Node) -> Result<(), Error> {
             if let Some(link) = node.cast_mut::<Autolink>() {
                 replace_url(cleaner, &mut link.url)?;
-                node.children = std::vec![Node::new(Text {
+                node.children = alloc::vec![Node::new(Text {
                     content: link.url.clone()
                 })];
             }
             if let Some(link) = node.cast_mut::<Linkified>() {
                 replace_url(cleaner, &mut link.url)?;
-                node.children = std::vec![Node::new(Text {
+                node.children = alloc::vec![Node::new(Text {
                     content: link.url.clone()
                 })];
             }
@@ -236,13 +271,13 @@ impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self {
             #[cfg(feature = "std")]
-            Error::FileRead(x) => write!(f, "error reading rules: {x}"),
-            Error::RuleSyntax(x) => write!(f, "error parsing rules: {x}"),
-            Error::UrlSyntax(x) => write!(f, "error parsing url: {x}"),
-            Error::RedirectionHasNoCapturingGroup(x) => {
+            Self::FileRead(x) => write!(f, "error reading rules: {x}"),
+            Self::RuleSyntax(x) => write!(f, "error parsing rules: {x}"),
+            Self::UrlSyntax(x) => write!(f, "error parsing url: {x}"),
+            Self::RedirectionHasNoCapturingGroup(x) => {
                 write!(f, "redirection regex {x} has no capture group")
             }
-            Error::PercentDecodeUtf8Error(x) => {
+            Self::PercentDecodeUtf8Error(x) => {
                 write!(f, "percent decoding resulted in non-UTF-8 bytes: {x}")
             }
         }
@@ -278,11 +313,11 @@ impl From<Utf8Error> for Error {
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Error::FileRead(e) => Some(e),
-            Error::RuleSyntax(e) => Some(e),
-            Error::UrlSyntax(e) => Some(e),
-            Error::RedirectionHasNoCapturingGroup(_) => None,
-            Error::PercentDecodeUtf8Error(e) => Some(e),
+            Self::FileRead(e) => Some(e),
+            Self::RuleSyntax(e) => Some(e),
+            Self::UrlSyntax(e) => Some(e),
+            Self::RedirectionHasNoCapturingGroup(_) => None,
+            Self::PercentDecodeUtf8Error(e) => Some(e),
         }
     }
 }

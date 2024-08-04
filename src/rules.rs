@@ -98,6 +98,7 @@ impl Provider {
         if strip_referral_marketing {
             self.rules.iter().chain(self.referral_marketing.iter())
         } else {
+            #[allow(clippy::iter_on_empty_collections)] // false positive, core::iter::empty() doesn't work because it has a different type
             self.rules.iter().chain([].iter())
         }
     }
