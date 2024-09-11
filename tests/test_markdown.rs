@@ -1,8 +1,7 @@
-use clearurls::Error;
-
 #[cfg(feature = "markdown-it")]
 #[test]
 fn test_markdown() {
+    use clearurls::Error;
     use clearurls::UrlCleaner;
     use markdown_it::MarkdownIt;
 
