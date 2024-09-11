@@ -15,10 +15,8 @@
 #![warn(rust_2021_compatibility)]
 #![warn(rust_2024_compatibility)]
 #![warn(unused)]
-#![warn(unused_crate_dependencies)]
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
-
 // Clippy categories
 #![warn(clippy::cargo)]
 #![warn(clippy::complexity)]
@@ -28,7 +26,6 @@
 #![warn(clippy::perf)]
 #![warn(clippy::style)]
 #![warn(clippy::suspicious)]
-
 // selected clippy lints from nursery and restriction
 #![allow(clippy::redundant_pub_crate)] // I like it my way
 #![warn(clippy::cognitive_complexity)]
@@ -39,7 +36,6 @@
 #![warn(clippy::float_cmp_const)]
 #![warn(clippy::float_equality_without_abs)]
 #![warn(clippy::missing_const_for_fn)]
-#![warn(clippy::mod_module_files)]
 #![warn(clippy::option_if_let_else)]
 #![warn(clippy::print_stderr)]
 #![warn(clippy::print_stdout)]
@@ -48,11 +44,9 @@
 #![warn(clippy::use_debug)]
 #![warn(clippy::useless_let_if_seq)]
 #![warn(clippy::wildcard_dependencies)]
-
 // Rustdoc lints
 #![warn(rustdoc::broken_intra_doc_links)]
 #![warn(rustdoc::missing_crate_level_docs)]
-
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
@@ -69,7 +63,7 @@
 //! # use clearurls::UrlCleaner;
 //! # fn main() -> Result<(), clearurls::Error> {
 //! let cleaner = UrlCleaner::from_embedded_rules()?;
-//! let res = cleaner.clear_url("https://example.com/test?utm_source=abc")?;
+//! let res = cleaner.clear_single_url("https://example.com/test?utm_source=abc")?;
 //! assert_eq!(res, "https://example.com/test");
 //! # Ok(())
 //! # }
@@ -94,6 +88,7 @@ use rules::Rules;
 mod deserialize_utils;
 mod rules;
 #[cfg(test)]
+#[allow(clippy::mod_module_files)] //
 mod tests;
 
 /// A [`UrlCleaner`] can remove tracking parameters from URLs.
@@ -156,7 +151,11 @@ impl UrlCleaner {
         self
     }
 
-    /// Clean a URL. This may involve
+    /// Clean a single URL.
+    ///
+    /// The argument is a string that is *just* a URL, with no text around.
+    ///
+    /// The Cleaning may involve
     /// - 1. removing tracking parameters
     ///      and/or,
     /// - 2. detecting redirections with the target url in a query parameters
@@ -166,7 +165,7 @@ impl UrlCleaner {
     ///
     /// # Errors
     /// If an error occurred. See the [`Error`] enum for possible reasons.
-    pub fn clear_url<'a>(&self, url: &'a str) -> Result<Cow<'a, str>, Error> {
+    pub fn clear_single_url<'a>(&self, url: &'a str) -> Result<Cow<'a, str>, Error> {
         if url.starts_with("data:") {
             return Ok(Cow::Borrowed(url));
         }
@@ -180,6 +179,53 @@ impl UrlCleaner {
         }
 
         Ok(result)
+    }
+
+    /// Clean all URLs in a text.
+    ///
+    /// This may involve
+    /// - 1. removing tracking parameters
+    ///      and/or,
+    /// - 2. detecting redirections with the target url in a query parameters
+    ///
+    /// # Returns
+    /// The string with all URLs inside cleaned.
+    /// Text outside of URLs is left unchanged.
+    ///
+    /// # Errors
+    /// Alls errors encountered are returned in a [`Vec`].
+    /// ```
+    #[cfg(feature = "linkify")]
+    pub fn clear_text<'a>(
+        &self,
+        s: &'a str,
+        finder: &linkify::LinkFinder,
+    ) -> Result<Cow<'a, str>, alloc::vec::Vec<Error>> {
+        use alloc::vec::Vec;
+        use alloc::string::String;
+
+        let mut spans = Vec::new();
+        let mut errors = Vec::new();
+
+        for res in finder.spans(s) {
+            match res.kind() {
+                Some(linkify::LinkKind::Url) => match self.clear_single_url(res.as_str()) {
+                    Ok(cow) => spans.push(cow),
+                    Err(e) => errors.push(e),
+                },
+                _ => spans.push(Cow::Borrowed(res.as_str())),
+            }
+        }
+
+        if errors.is_empty() {
+            if spans.iter().all(|s| matches!(s, Cow::Borrowed(_))) {
+                Ok(Cow::Borrowed(s))
+            } else {
+                Ok(Cow::Owned(spans.into_iter().collect::<String>()))
+            }
+        } else {
+            Err(errors)
+        }
     }
 
     /// Clean all URLs in a Markdown document. This affects all kinds of URLs, like
@@ -202,9 +248,10 @@ impl UrlCleaner {
         use markdown_it::plugins::cmark::inline::link::Link;
         use markdown_it::plugins::extra::linkify::Linkified;
         use markdown_it::Node;
+        use alloc::string::String;
 
-        fn replace_url(cleaner: &UrlCleaner, url: &mut alloc::string::String) -> Result<(), Error> {
-            match cleaner.clear_url(url)? {
+        fn replace_url(cleaner: &UrlCleaner, url: &mut String) -> Result<(), Error> {
+            match cleaner.clear_single_url(url)? {
                 Cow::Borrowed(_) => {}
                 Cow::Owned(new_url) => {
                     *url = new_url;

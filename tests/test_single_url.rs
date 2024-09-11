@@ -5,7 +5,7 @@ fn test_single_url() {
     let cleaner = UrlCleaner::from_embedded_rules().unwrap();
 
     let test = |original: &str, expected: &str| {
-        let result = cleaner.clear_url(original).unwrap().into_owned();
+        let result = cleaner.clear_single_url(original).unwrap().into_owned();
         assert_eq!(result, expected);
     };
 

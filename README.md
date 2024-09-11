@@ -11,7 +11,7 @@ Easily remove tracking parameters and other nuisance from URLs with a simple API
 use clearurls::UrlCleaner;
 fn main() -> Result<(), clearurls::Error> {
     let cleaner = UrlCleaner::from_embedded_rules()?;
-    let res = cleaner.clear_url("https://example.com/test?utm_source=abc")?;
+    let res = cleaner.clear_single_url("https://example.com/test?utm_source=abc")?;
     assert_eq!(res, "https://example.com/test");
     Ok(())
 }
