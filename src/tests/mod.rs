@@ -1,3 +1,5 @@
+#![allow(clippy::trivial_regex)]
+
 use super::*;
 use crate::rules::Provider;
 use crate::Error::{PercentDecodeUtf8Error, RedirectionHasNoCapturingGroup};
@@ -16,6 +18,7 @@ const _: () = {
     assert_auto_traits::<Error>();
 };
 
+#[allow(edition_2024_expr_fragment_specifier)]
 macro_rules! assert_matches {
     ($e:expr, $pat:pat $(if $guard:expr)? $(,)?) => {
         assert!(matches!($e, $pat $(if $guard)?), "assertion failed: {:?} does not match {}", $e, stringify!($pat $(if $guard)?))
@@ -216,7 +219,7 @@ fn test_remove_fields_from_url_errors() {
         },
         strip_referral_marketing: false,
     };
-    let err = provider.clear_url("//example.com").unwrap_err();
+    let err = provider.clear_single_url("//example.com").unwrap_err();
     assert_matches!(err, Error::UrlSyntax(_));
     #[cfg(feature = "std")]
     {
@@ -233,11 +236,7 @@ fn error_eq<T: std::error::Error + PartialEq + 'static>(
     x: &T,
     y: &(dyn std::error::Error + 'static),
 ) -> bool {
-    if let Some(y2) = y.downcast_ref::<T>() {
-        x == y2
-    } else {
-        false
-    }
+    y.downcast_ref::<T>().is_some_and(|y2| core::ptr::eq(x, y2))
 }
 
 #[cfg(feature = "std")]
@@ -245,9 +244,5 @@ fn error_ptr_eq<T: std::error::Error + 'static>(
     x: &T,
     y: &(dyn std::error::Error + 'static),
 ) -> bool {
-    if let Some(y2) = y.downcast_ref::<T>() {
-        core::ptr::eq(x, y2)
-    } else {
-        false
-    }
+    y.downcast_ref::<T>().is_some_and(|y2| core::ptr::eq(x, y2))
 }
