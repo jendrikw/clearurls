@@ -1,10 +1,9 @@
-use linkify::LinkFinder;
-use clearurls::Error;
-
 #[cfg(feature = "linkify")]
 #[test]
 fn test_linkify() {
+    use linkify::LinkFinder;
     use clearurls::UrlCleaner;
+    use clearurls::Error;
 
     let cleaner = UrlCleaner::from_embedded_rules().unwrap();
     let finder = LinkFinder::new();
