@@ -47,6 +47,7 @@
 // Rustdoc lints
 #![warn(rustdoc::broken_intra_doc_links)]
 #![warn(rustdoc::missing_crate_level_docs)]
+
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
@@ -88,7 +89,7 @@ use rules::Rules;
 mod deserialize_utils;
 mod rules;
 #[cfg(test)]
-#[allow(clippy::mod_module_files)] //
+#[allow(clippy::mod_module_files)]
 mod tests;
 
 /// A [`UrlCleaner`] can remove tracking parameters from URLs.
@@ -110,7 +111,7 @@ impl UrlCleaner {
         Self::from_rules_file(std::fs::File::open(path)?)
     }
 
-    /// Construct a [`UrlCleaner`] with rules from a [reader][std::io::Read], most often a [`File`]
+    /// Construct a [`UrlCleaner`] with rules from a [reader][std::io::Read], most often a [`File`][std::fs::File]
     /// # Errors
     /// See [`Error`]
     #[cfg(feature = "std")]
@@ -217,7 +218,7 @@ impl UrlCleaner {
     /// Text outside of URLs is left unchanged.
     ///
     /// # Errors
-    /// Alls errors encountered are returned in a [`Vec`].
+    /// Alls errors encountered are returned in a [`Vec`][alloc::vec::Vec].
     #[cfg(feature = "linkify")]
     pub fn clear_text<'a>(&self, s: &'a str) -> Result<Cow<'a, str>, alloc::vec::Vec<Error>> {
         self.clear_text_with_linkfinder(s, &linkify::LinkFinder::new())
@@ -236,7 +237,7 @@ impl UrlCleaner {
     /// Text outside of URLs is left unchanged.
     ///
     /// # Errors
-    /// Alls errors encountered are returned in a [`Vec`].
+    /// Alls errors encountered are returned in a [`Vec`][alloc::vec::Vec].
     #[cfg(feature = "linkify")]
     pub fn clear_text_with_linkfinder<'a>(
         &self,

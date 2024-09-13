@@ -27,11 +27,11 @@ jobs:
     - name: Install Rust Toolchain
       run: rustup default ${{ matrix.channel }} && rustup component add clippy && cargo install cargo-llvm-cov
     - name: Build
-      run: cargo build --verbose --no-default-features ${{ matrix.features }}
+      run: RUSTFLAGS="-Dwarnings" cargo build --verbose --no-default-features ${{ matrix.features }}
     - name: Run tests
-      run: cargo llvm-cov test --text --verbose --no-default-features ${{ matrix.features }}
+      run: RUSTFLAGS="-Dwarnings" cargo llvm-cov test --text --verbose --no-default-features ${{ matrix.features }}
     - name: Build docs
-      run: cargo doc --verbose --no-default-features --no-deps ${{ matrix.features }}
+      run: RUSTDOCFLAGS="-Dwarnings" cargo doc --verbose --no-default-features --no-deps ${{ matrix.features }}
     - name: Run clippy
       run: RUSTFLAGS="-Dwarnings" cargo clippy --verbose --no-default-features ${{ matrix.features }}
       
