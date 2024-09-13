@@ -63,7 +63,7 @@
 //! # use clearurls::UrlCleaner;
 //! # fn main() -> Result<(), clearurls::Error> {
 //! let cleaner = UrlCleaner::from_embedded_rules()?;
-//! let res = cleaner.clear_single_url("https://example.com/test?utm_source=abc")?;
+//! let res = cleaner.clear_single_url_str("https://example.com/test?utm_source=abc")?;
 //! assert_eq!(res, "https://example.com/test");
 //! # Ok(())
 //! # }
@@ -79,9 +79,9 @@ extern crate std;
 
 use alloc::borrow::Cow;
 use core::fmt::{Display, Formatter};
-use core::str::Utf8Error;
+use core::str::{FromStr, Utf8Error};
 use regex::Regex;
-use url::ParseError;
+use url::{ParseError, Url};
 
 use rules::Rules;
 
@@ -165,20 +165,44 @@ impl UrlCleaner {
     ///
     /// # Errors
     /// If an error occurred. See the [`Error`] enum for possible reasons.
-    pub fn clear_single_url<'a>(&self, url: &'a str) -> Result<Cow<'a, str>, Error> {
+    pub fn clear_single_url_str<'a>(&self, url: &'a str) -> Result<Cow<'a, str>, Error> {
         if url.starts_with("data:") {
             return Ok(Cow::Borrowed(url));
         }
-        let mut result = Cow::Borrowed(url);
+        let mut result = Url::from_str(url)?;
         for p in &self.rules.providers {
-            if p.match_url(&result) {
-                let cleaned = p.remove_fields_from_url(&result, self.strip_referral_marketing)?;
-                // TODO get rid of the allocation
-                result = Cow::Owned(cleaned.into_owned());
+            if p.match_url(result.as_str()) {
+                result = p.remove_fields_from_url(&result, self.strip_referral_marketing)?;
             }
         }
 
-        Ok(result)
+        Ok(Cow::Owned(result.into()))
+    }
+
+    /// Clean a single URL.
+    ///
+    /// The Cleaning may involve
+    /// - 1. removing tracking parameters
+    ///      and/or,
+    /// - 2. detecting redirections with the target url in a query parameters
+    ///
+    /// # Returns
+    /// a cleaned URL
+    ///
+    /// # Errors
+    /// If an error occurred. See the [`Error`] enum for possible reasons.
+    pub fn clear_single_url<'a>(&self, url: &'a Url) -> Result<Cow<'a, Url>, Error> {
+        if url.scheme().starts_with("data") {
+            return Ok(Cow::Borrowed(url));
+        }
+        let mut url = Cow::Borrowed(url);
+        for p in &self.rules.providers {
+            if p.match_url(url.as_str()) {
+                url = Cow::Owned(p.remove_fields_from_url(&url, self.strip_referral_marketing)?);
+            }
+        }
+
+        Ok(url)
     }
 
     /// Clean all URLs in a text.
@@ -194,9 +218,27 @@ impl UrlCleaner {
     ///
     /// # Errors
     /// Alls errors encountered are returned in a [`Vec`].
-    /// ```
     #[cfg(feature = "linkify")]
-    pub fn clear_text<'a>(
+    pub fn clear_text<'a>(&self, s: &'a str) -> Result<Cow<'a, str>, alloc::vec::Vec<Error>> {
+        self.clear_text_with_linkfinder(s, &linkify::LinkFinder::new())
+    }
+
+
+    /// Clean all URLs in a text.
+    ///
+    /// This may involve
+    /// - 1. removing tracking parameters
+    ///      and/or,
+    /// - 2. detecting redirections with the target url in a query parameters
+    ///
+    /// # Returns
+    /// The string with all URLs inside cleaned.
+    /// Text outside of URLs is left unchanged.
+    ///
+    /// # Errors
+    /// Alls errors encountered are returned in a [`Vec`].
+    #[cfg(feature = "linkify")]
+    pub fn clear_text_with_linkfinder<'a>(
         &self,
         s: &'a str,
         finder: &linkify::LinkFinder,
@@ -209,7 +251,7 @@ impl UrlCleaner {
 
         for res in finder.spans(s) {
             match res.kind() {
-                Some(linkify::LinkKind::Url) => match self.clear_single_url(res.as_str()) {
+                Some(linkify::LinkKind::Url) => match self.clear_single_url_str(res.as_str()) {
                     Ok(cow) => spans.push(cow),
                     Err(e) => errors.push(e),
                 },
@@ -251,7 +293,7 @@ impl UrlCleaner {
         use alloc::string::String;
 
         fn replace_url(cleaner: &UrlCleaner, url: &mut String) -> Result<(), Error> {
-            match cleaner.clear_single_url(url)? {
+            match cleaner.clear_single_url_str(url)? {
                 Cow::Borrowed(_) => {}
                 Cow::Owned(new_url) => {
                     *url = new_url;

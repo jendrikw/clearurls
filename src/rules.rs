@@ -1,7 +1,6 @@
 use alloc::borrow::Cow;
 use alloc::str::FromStr;
 use alloc::string::String;
-use alloc::string::ToString;
 use alloc::vec::Vec;
 
 use percent_encoding::percent_decode_str;
@@ -38,16 +37,16 @@ pub(crate) struct Provider {
 }
 
 impl Provider {
-    pub(crate) fn remove_fields_from_url<'a>(
+    pub(crate) fn remove_fields_from_url(
         &self,
-        url: &'a str,
+        url: &Url,
         strip_referral_marketing: bool,
-    ) -> Result<Cow<'a, str>, Error> {
-        if let Some(redirect) = self.get_redirection(url)? {
+    ) -> Result<Url, Error> {
+        if let Some(redirect) = self.get_redirection(url.as_str())? {
             let url = repeatedly_urldecode(redirect)?;
-            return Ok(url);
+            return Ok(Url::from_str(&url)?);
         };
-        let mut url = Cow::Borrowed(url);
+        let mut url = Cow::Borrowed(url.as_str());
         for r in &self.raw_rules {
             match r.replace_all(&url, "") {
                 Cow::Borrowed(_) => {}
@@ -70,7 +69,7 @@ impl Provider {
         url.set_query(query.as_deref());
         url.set_fragment(fragment.as_deref());
 
-        Ok(Cow::Owned(url.to_string())) // I'm sad about the allocation
+        Ok(url)
     }
 
     pub(crate) fn match_url(&self, url: &str) -> bool {

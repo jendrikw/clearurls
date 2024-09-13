@@ -44,9 +44,9 @@ fn test_strip_referral_marketing() {
         redirections: vec![],
     };
     let res = provider
-        .remove_fields_from_url("https://example.com?ref=1", true)
+        .remove_fields_from_url(&Url::from_str("https://example.com?ref=1").unwrap(), true)
         .unwrap();
-    assert_eq!(res, "https://example.com/");
+    assert_eq!(res.as_str(), "https://example.com/");
 }
 
 //noinspection RegExpSimplifiable
@@ -63,7 +63,7 @@ fn test_invalid_redirection() {
     };
     let err = provider
         .remove_fields_from_url(
-            "https://google.co.uk/url?foo=bar&q=http%3A%2F%2Fexample.com%2Fimage.png&bar=foo",
+            &Url::from_str("https://google.co.uk/url?foo=bar&q=http%3A%2F%2Fexample.com%2Fimage.png&bar=foo").unwrap(),
             false,
         )
         .unwrap_err();
@@ -88,7 +88,7 @@ fn test_invalid_urldecode() {
     };
     // a byte F0 is not valid utf 8
     let err = provider
-        .remove_fields_from_url("https://google.co.uk/url?foo=bar&q=http%F0", false)
+        .remove_fields_from_url(&Url::from_str("https://google.co.uk/url?foo=bar&q=http%F0").unwrap(), false)
         .unwrap_err();
     assert_matches!(err, PercentDecodeUtf8Error(_));
     #[cfg(feature = "std")]
@@ -111,8 +111,8 @@ fn test_raw_rules_unchanged() {
         exceptions: RegexSet::default(),
         redirections: vec![],
     };
-    let res = provider.remove_fields_from_url("https://pantip.com/", false);
-    assert_eq!(res.unwrap(), "https://pantip.com/");
+    let res = provider.remove_fields_from_url(&Url::from_str("https://pantip.com/").unwrap(), false);
+    assert_eq!(res.unwrap().as_str(), "https://pantip.com/");
 }
 
 #[test]
@@ -126,7 +126,7 @@ fn test_raw_rules_produce_invalid_url() {
         redirections: vec![],
     };
     let err = provider
-        .remove_fields_from_url("https://example.com", false)
+        .remove_fields_from_url(&Url::from_str("https://example.com").unwrap(), false)
         .unwrap_err();
     assert_matches!(err, Error::UrlSyntax(_));
     #[cfg(feature = "std")]
@@ -219,7 +219,7 @@ fn test_remove_fields_from_url_errors() {
         },
         strip_referral_marketing: false,
     };
-    let err = provider.clear_single_url("//example.com").unwrap_err();
+    let err = provider.clear_single_url_str("//example.com").unwrap_err();
     assert_matches!(err, Error::UrlSyntax(_));
     #[cfg(feature = "std")]
     {

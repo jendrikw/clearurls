@@ -1,18 +1,33 @@
-use clearurls::UrlCleaner;
+use std::str::FromStr;
+use url::{ParseError, Url};
+use clearurls::{Error, UrlCleaner};
 
 #[test]
 fn test_single_url() {
     let cleaner = UrlCleaner::from_embedded_rules().unwrap();
 
     let test = |original: &str, expected: &str| {
-        let result = cleaner.clear_single_url(original).unwrap().into_owned();
+        let result = cleaner.clear_single_url_str(original).unwrap();
         assert_eq!(result, expected);
+        let url = Url::from_str(original).unwrap();
+        let result = cleaner.clear_single_url(&url).unwrap();
+        assert_eq!(result.as_str(), expected);
     };
 
     test(
         "https://deezer.com/track/891177062?utm_source=deezer",
         "https://deezer.com/track/891177062",
     );
+
+    // url encoded parameter
+    test(
+        "https://www.google.com/url?q=https%3A%2F%2Fpypi.org%2Fproject%2FUnalix",
+        "https://pypi.org/project/Unalix",
+    );
+
+    // url encoded parameter that's not a url
+    assert!(matches!(cleaner.clear_single_url_str("https://www.google.com/url?q=http%3A%2F%2F%5B%3A%3A%3A1%5D").unwrap_err(), Error::UrlSyntax(ParseError::InvalidIpv6Address)));
+    assert!(matches!(cleaner.clear_single_url(&Url::from_str("https://www.google.com/url?q=http%3A%2F%2F%5B%3A%3A%3A1%5D").unwrap()).unwrap_err(), Error::UrlSyntax(ParseError::InvalidIpv6Address)));
 
     // double url encoded parameter
     test(
