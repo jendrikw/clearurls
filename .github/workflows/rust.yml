@@ -29,6 +29,8 @@ jobs:
     - name: Build
       run: RUSTFLAGS="-Dwarnings" cargo build --verbose --no-default-features ${{ matrix.features }}
     - name: Run tests
+      run: RUSTFLAGS="-Dwarnings" cargo test --verbose --no-default-features ${{ matrix.features }}
+    - name: Coverage
       run: RUSTFLAGS="-Dwarnings" cargo llvm-cov test --text --verbose --no-default-features ${{ matrix.features }}
     - name: Build docs
       run: RUSTDOCFLAGS="-Dwarnings" cargo doc --verbose --no-default-features --no-deps ${{ matrix.features }}
