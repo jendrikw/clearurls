@@ -1,6 +1,6 @@
 [package]
 name = "clearurls"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2021"
 authors = ["jendrikw"]
 description = "Clear URLS from tracking parameters with crowd-sourced rules from https://clearurls.xyz"
