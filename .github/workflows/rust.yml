@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Rust Toolchain
-        run: rustup update ${{ matrix.channel }} && rustup default ${{ matrix.channel }} && rustup component add clippy && cargo install cargo-llvm-cov && cargo install cargo-hack --locked
+        run: rustup update ${{ matrix.channel }} && rustup default ${{ matrix.channel }} && rustup component add clippy && cargo +stable install cargo-llvm-cov && cargo +stable install cargo-hack --locked
       - name: Build
         run:  cargo hack --feature-powerset build --verbose
       - name: Run tests
