@@ -139,7 +139,11 @@ fn repeatedly_urldecode(s: &str) -> Result<Cow<'_, str>, Error> {
 }
 
 fn is_full_match(regex: &Regex, haystack: &str) -> bool {
-    regex
-        .find(haystack)
-        .is_some_and(|m| m.len() == haystack.len())
+    let found = regex
+        .find(haystack);
+    #[allow(clippy::option_if_let_else)]
+    match found {
+        Some(m) => m.len() == haystack.len(),
+        None => false,
+    }
 }

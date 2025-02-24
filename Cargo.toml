@@ -8,6 +8,7 @@ categories = ["network-programming", "web-programming"]
 keywords = ["clean", "clear", "url"]
 repository = "https://github.com/jendrikw/clearurls"
 license = "LGPL-3.0-only"
+rust-version = "1.65.0"
 
 [features]
 std = ["serde/std", "serde_json/std", "regex/std"]
