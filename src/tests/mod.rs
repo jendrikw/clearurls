@@ -93,7 +93,7 @@ fn test_invalid_urldecode() {
     assert_matches!(err, PercentDecodeUtf8Error(_));
     #[cfg(feature = "std")]
     {
-        assert_matches!(err, PercentDecodeUtf8Error(ref inner) if error_eq(inner, err.source().unwrap()));
+        assert_matches!(err, PercentDecodeUtf8Error(ref inner) if error_ptr_eq(inner, err.source().unwrap()));
     }
     assert_eq!(
         err.to_string(),
@@ -131,7 +131,7 @@ fn test_raw_rules_produce_invalid_url() {
     assert_matches!(err, Error::UrlSyntax(_));
     #[cfg(feature = "std")]
     {
-        assert_matches!(err, Error::UrlSyntax(ref inner) if error_eq(inner, err.source().unwrap()));
+        assert_matches!(err, Error::UrlSyntax(ref inner) if error_ptr_eq(inner, err.source().unwrap()));
     }
 }
 
@@ -223,7 +223,7 @@ fn test_remove_fields_from_url_errors() {
     assert_matches!(err, Error::UrlSyntax(_));
     #[cfg(feature = "std")]
     {
-        assert_matches!(err, Error::UrlSyntax(ref inner) if error_eq(inner, err.source().unwrap()));
+        assert_matches!(err, Error::UrlSyntax(ref inner) if error_ptr_eq(inner, err.source().unwrap()));
     }
     assert_eq!(
         err.to_string(),
@@ -232,17 +232,13 @@ fn test_remove_fields_from_url_errors() {
 }
 
 #[cfg(feature = "std")]
-fn error_eq<T: std::error::Error + PartialEq + 'static>(
-    x: &T,
-    y: &(dyn std::error::Error + 'static),
-) -> bool {
-    y.downcast_ref::<T>().is_some_and(|y2| core::ptr::eq(x, y2))
-}
-
-#[cfg(feature = "std")]
 fn error_ptr_eq<T: std::error::Error + 'static>(
     x: &T,
     y: &(dyn std::error::Error + 'static),
 ) -> bool {
-    y.downcast_ref::<T>().is_some_and(|y2| core::ptr::eq(x, y2))
+    #[allow(clippy::option_if_let_else)]
+    match y.downcast_ref::<T>() {
+        Some(y) => core::ptr::eq(x, y),
+        None => false,
+    }
 }
