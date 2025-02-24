@@ -12,21 +12,23 @@ env:
   RUSTDOCFLAGS: "-Dwarnings -Aunknown-lints"
 
 jobs:
-  get-msrv:
+  get_msrv:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Set Env
-        run: grep rust-version Cargo.toml | tr -d ' ' | tee -a $GITHUB_OUTPUT
+        run:
+          - export VERSION=$(sed --regexp-extended --quiet 's/rust-version = "(.*)"/\1/p' Cargo.toml)
+          - echo "rust_version=$VERSION" | tee -a $GITHUB_OUTPUT
   build:
-    needs: get-msrv
+    needs: get_msrv
     strategy:
       matrix:
         channel:
           - stable
           - beta
           - nightly
-          - ${{ needs.get-msrv.outputs.rust-version }}
+          - ${{ needs.get_msrv.outputs.rust_version }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
