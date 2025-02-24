@@ -15,10 +15,10 @@ jobs:
   get_msrv:
     runs-on: ubuntu-latest
     outputs:
-      rust_version: foo
+      rust_version: ${{ steps.setenv.outputs.rust_version }}
     steps:
       - uses: actions/checkout@v4
-      - name: Set Env
+      - id: setenv
         run: echo "rust_version=$(sed --regexp-extended --quiet 's/rust-version = "(.*)"/\1/p' Cargo.toml)" | tee -a $GITHUB_OUTPUT
   build:
     needs: get_msrv
