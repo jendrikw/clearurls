@@ -329,7 +329,7 @@ impl UrlCleaner {
         doc.walk_mut(|node, _| {
             if let Err(e) = callback(self, node) {
                 result.push(e);
-            };
+            }
         });
 
         if result.is_empty() {
