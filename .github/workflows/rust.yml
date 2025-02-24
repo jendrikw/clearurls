@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set Env
-        run: grep rust-version Cargo.toml >> $GITHUB_OUTPUT
+        run: grep rust-version Cargo.toml | tr -d ' ' | tee -a $GITHUB_OUTPUT
   build:
     needs: get-msrv
     strategy:
