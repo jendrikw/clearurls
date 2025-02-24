@@ -85,8 +85,8 @@ where
         where
             A: MapAccess<'de>,
         {
-            let cap = map.size_hint().unwrap_or(0);
-            let mut vec = Vec::with_capacity(cap);
+            let capacity = map.size_hint().unwrap_or(0);
+            let mut vec = Vec::with_capacity(capacity);
             while let Some((_, v)) = map.next_entry::<IgnoredAny, T>()? {
                 vec.push(v);
             }
