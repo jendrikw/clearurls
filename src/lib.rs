@@ -1,7 +1,6 @@
 // Rustc lints
 #![forbid(unsafe_code)]
 #![warn(elided_lifetimes_in_associated_constant)]
-#![warn(elided_lifetimes_in_path)]
 #![warn(elided_lifetimes_in_paths)]
 #![warn(future_incompatible)]
 #![warn(keyword_idents)]
