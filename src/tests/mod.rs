@@ -1,5 +1,3 @@
-#![allow(clippy::trivial_regex)]
-
 use super::*;
 use crate::rules::Provider;
 use crate::Error::{PercentDecodeUtf8Error, RedirectionHasNoCapturingGroup};
@@ -18,9 +16,8 @@ const _: () = {
     assert_auto_traits::<Error>();
 };
 
-#[allow(edition_2024_expr_fragment_specifier)]
 macro_rules! assert_matches {
-    ($e:expr, $pat:pat $(if $guard:expr)? $(,)?) => {
+    ($e:expr_2021, $pat:pat $(if $guard:expr_2021)? $(,)?) => {
         assert!(matches!($e, $pat $(if $guard)?), "assertion failed: {:?} does not match {}", $e, stringify!($pat $(if $guard)?))
     };
 }
@@ -34,6 +31,7 @@ fn test_referral_marketing_setter() {
 }
 
 #[test]
+#[allow(clippy::trivial_regex)]
 fn test_strip_referral_marketing() {
     let provider = Provider {
         url_pattern: Regex::new("https://example.com").unwrap(),
@@ -51,6 +49,7 @@ fn test_strip_referral_marketing() {
 
 //noinspection RegExpSimplifiable
 #[test]
+#[allow(clippy::trivial_regex)]
 fn test_invalid_redirection() {
     let provider = Provider {
         url_pattern: Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}").unwrap(),
@@ -80,6 +79,7 @@ fn test_invalid_redirection() {
 
 //noinspection RegExpSimplifiable
 #[test]
+#[allow(clippy::trivial_regex)]
 fn test_invalid_urldecode() {
     let provider = Provider {
         url_pattern: Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}").unwrap(),
@@ -123,6 +123,7 @@ fn test_raw_rules_unchanged() {
 }
 
 #[test]
+#[allow(clippy::trivial_regex)]
 fn test_raw_rules_produce_invalid_url() {
     let provider = Provider {
         url_pattern: Regex::new("https://example.com").unwrap(),

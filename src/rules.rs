@@ -99,6 +99,7 @@ impl Provider {
         } else {
             #[allow(clippy::iter_on_empty_collections)]
             // false positive, core::iter::empty() doesn't work because it has a different type
+            // see https://github.com/rust-lang/rust-clippy/issues/11680
             self.rules.iter().chain([].iter())
         }
     }

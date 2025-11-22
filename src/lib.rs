@@ -51,7 +51,7 @@
 #![warn(rustdoc::missing_crate_level_docs)]
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
-#![allow(clippy::doc_markdown)]
+
 //! This crate provides a solution to remove tracking parameters and other nuisance from URLs.
 //!
 //! In order to detect such parameters, this crates uses crowdsourced *Rules* from the
