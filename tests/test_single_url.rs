@@ -19,6 +19,11 @@ fn test_single_url() {
         "https://deezer.com/track/891177062",
     );
 
+    test(
+        "https://deezer.com/track/891177062#utm_source=deezer",
+        "https://deezer.com/track/891177062",
+    );
+
     // url encoded parameter
     test(
         "https://www.google.com/url?q=https%3A%2F%2Fpypi.org%2Fproject%2FUnalix",
