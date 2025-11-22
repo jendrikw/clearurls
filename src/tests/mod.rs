@@ -16,8 +16,9 @@ const _: () = {
     assert_auto_traits::<Error>();
 };
 
+#[allow(edition_2024_expr_fragment_specifier)]
 macro_rules! assert_matches {
-    ($e:expr_2021, $pat:pat $(if $guard:expr_2021)? $(,)?) => {
+    ($e:expr, $pat:pat $(if $guard:expr)? $(,)?) => {
         assert!(matches!($e, $pat $(if $guard)?), "assertion failed: {:?} does not match {}", $e, stringify!($pat $(if $guard)?))
     };
 }
