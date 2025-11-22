@@ -19,6 +19,7 @@
 #![warn(unused)]
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
+#![allow(rust_2024_compatibility)]
 // Clippy categories
 #![warn(clippy::cargo)]
 #![warn(clippy::complexity)]
@@ -80,12 +81,15 @@ extern crate alloc;
 extern crate std;
 
 use alloc::borrow::Cow;
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::fmt::{Display, Formatter};
 use core::str::{FromStr, Utf8Error};
 use regex::Regex;
 use url::{ParseError, Url};
 
-use rules::Rules;
+use rules::{Provider, Rules, keys_from_url};
 
 mod deserialize_utils;
 mod rules;
@@ -99,7 +103,8 @@ mod tests;
 /// It's recommended to create one per application and reuse it.
 #[derive(Debug)]
 pub struct UrlCleaner {
-    rules: Rules,
+    providers: BTreeMap<String, Vec<Provider>>,
+    keyless_providers: Vec<Provider>,
     strip_referral_marketing: bool,
 }
 
@@ -118,19 +123,13 @@ impl UrlCleaner {
     #[cfg(feature = "std")]
     pub fn from_rules_file<R: std::io::Read>(reader: R) -> Result<Self, Error> {
         let buf = std::io::BufReader::new(reader);
-        Ok(Self {
-            rules: serde_json::from_reader(buf)?,
-            strip_referral_marketing: false,
-        })
+        Ok(Self::from_rules(serde_json::from_reader(buf)?))
     }
 
     /// # Errors
     /// See [`Error`]
     pub fn from_rules_str(rules: &str) -> Result<Self, Error> {
-        Ok(Self {
-            rules: serde_json::from_str(rules)?,
-            strip_referral_marketing: false,
-        })
+        Ok(Self::from_rules(serde_json::from_str(rules)?))
     }
 
     /// Construct using the JSON embedded in this library.
@@ -172,7 +171,7 @@ impl UrlCleaner {
             return Ok(Cow::Borrowed(url));
         }
         let mut result = Url::from_str(url)?;
-        for p in &self.rules.providers {
+        for p in self.possible_matches(url) {
             if p.match_url(result.as_str()) {
                 result = p.remove_fields_from_url(&result, self.strip_referral_marketing)?;
             }
@@ -197,14 +196,14 @@ impl UrlCleaner {
         if url.scheme().starts_with("data") {
             return Ok(Cow::Borrowed(url));
         }
-        let mut url = Cow::Borrowed(url);
-        for p in &self.rules.providers {
-            if p.match_url(url.as_str()) {
-                url = Cow::Owned(p.remove_fields_from_url(&url, self.strip_referral_marketing)?);
+        let mut result = Cow::Borrowed(url);
+        for p in self.possible_matches(url.as_str()) {
+            if p.match_url(result.as_str()) {
+                result = Cow::Owned(p.remove_fields_from_url(&result, self.strip_referral_marketing)?);
             }
         }
 
-        Ok(url)
+        Ok(result)
     }
 
     /// Clean all URLs in a text.
@@ -219,7 +218,7 @@ impl UrlCleaner {
     /// Text outside of URLs is left unchanged.
     ///
     /// # Errors
-    /// Alls errors encountered are returned in a [`Vec`][alloc::vec::Vec].
+    /// Alls errors encountered are returned in a [`Vec`].
     #[cfg(feature = "linkify")]
     pub fn clear_text<'a>(&self, s: &'a str) -> Result<Cow<'a, str>, alloc::vec::Vec<Error>> {
         self.clear_text_with_linkfinder(s, &linkify::LinkFinder::new())
@@ -237,7 +236,7 @@ impl UrlCleaner {
     /// Text outside of URLs is left unchanged.
     ///
     /// # Errors
-    /// Alls errors encountered are returned in a [`Vec`][alloc::vec::Vec].
+    /// Alls errors encountered are returned in a [`Vec`].
     #[cfg(feature = "linkify")]
     pub fn clear_text_with_linkfinder<'a>(
         &self,
@@ -339,6 +338,29 @@ impl UrlCleaner {
             Ok(())
         } else {
             Err(result)
+        }
+    }
+
+    fn possible_matches<'a>(&'a self, url: &'a str) -> impl Iterator<Item = &'a Provider> + 'a {
+        keys_from_url(url)
+            .flat_map(|key| self.providers.get(key).map(Vec::as_slice).unwrap_or_default())
+            .chain(&self.keyless_providers)
+    }
+
+    fn from_rules(rules: Rules) -> Self {
+        let mut providers = BTreeMap::new();
+        let mut keyless_providers = Vec::new();
+        for provider in rules.providers {
+            if let Some(key) = provider.get_key() {
+                providers.entry(key).or_insert_with(Vec::new).push(provider);
+            } else {
+                keyless_providers.push(provider);
+            }
+        }
+        Self {
+            providers,
+            keyless_providers,
+            strip_referral_marketing: false,
         }
     }
 }

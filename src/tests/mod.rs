@@ -149,9 +149,9 @@ fn test_raw_rules_produce_invalid_url() {
 fn test_from_read_vec() {
     let data = br#"{"providers":{"example":{"urlPattern":"","rules":["foo"]}}}"#;
     let c = UrlCleaner::from_rules_file(&data[..]).unwrap();
-    assert_eq!(c.rules.providers.len(), 1);
-    assert_eq!(c.rules.providers[0].rules.len(), 1);
-    assert_eq!(c.rules.providers[0].rules[0].as_str(), "foo");
+    assert_eq!(c.keyless_providers.len(), 1);
+    assert_eq!(c.keyless_providers[0].rules.len(), 1);
+    assert_eq!(c.keyless_providers[0].rules[0].as_str(), "foo");
 }
 
 #[test]
@@ -183,9 +183,9 @@ fn test_from_read_file() {
         .unwrap();
     file.seek(SeekFrom::Start(0)).unwrap();
     let c = UrlCleaner::from_rules_file(&file).unwrap();
-    assert_eq!(c.rules.providers.len(), 1);
-    assert_eq!(c.rules.providers[0].rules.len(), 1);
-    assert_eq!(c.rules.providers[0].rules[0].as_str(), "foo");
+    assert_eq!(c.keyless_providers.len(), 1);
+    assert_eq!(c.keyless_providers[0].rules.len(), 1);
+    assert_eq!(c.keyless_providers[0].rules[0].as_str(), "foo");
 }
 
 #[test]
@@ -196,9 +196,9 @@ fn test_from_path() {
         .unwrap();
     file.seek(SeekFrom::Start(0)).unwrap();
     let c = UrlCleaner::from_rules_path(file.path()).unwrap();
-    assert_eq!(c.rules.providers.len(), 1);
-    assert_eq!(c.rules.providers[0].rules.len(), 1);
-    assert_eq!(c.rules.providers[0].rules[0].as_str(), "foo");
+    assert_eq!(c.keyless_providers.len(), 1);
+    assert_eq!(c.keyless_providers[0].rules.len(), 1);
+    assert_eq!(c.keyless_providers[0].rules[0].as_str(), "foo");
 }
 
 #[test]
@@ -216,16 +216,15 @@ fn test_from_invalid_path() {
 #[test]
 fn test_remove_fields_from_url_errors() {
     let provider = UrlCleaner {
-        rules: Rules {
-            providers: vec![Provider {
-                url_pattern: Regex::new(".*").unwrap(),
-                rules: vec![],
-                raw_rules: vec![],
-                referral_marketing: vec![],
-                exceptions: RegexSet::default(),
-                redirections: vec![],
-            }],
-        },
+        providers: BTreeMap::new(),
+        keyless_providers: vec![Provider {
+            url_pattern: Regex::new(".*").unwrap(),
+            rules: vec![],
+            raw_rules: vec![],
+            referral_marketing: vec![],
+            exceptions: RegexSet::default(),
+            redirections: vec![],
+        }],
         strip_referral_marketing: false,
     };
     let err = provider.clear_single_url_str("//example.com").unwrap_err();
@@ -237,6 +236,39 @@ fn test_remove_fields_from_url_errors() {
     assert_eq!(
         err.to_string(),
         "error parsing url: relative URL without a base"
+    );
+}
+
+#[test]
+fn test_key_optimization_effectiveness() {
+    // If an assertion here fails, then maybe `Provider::get_key` doesn't return a unique value often enough for a new dataset
+    let cleaner = UrlCleaner::from_embedded_rules().unwrap();
+    let num_with_keys = cleaner.providers.values().map(Vec::len).sum::<usize>();
+    let num_without_keys = cleaner.keyless_providers.len();
+    let total = num_with_keys + num_without_keys;
+    let (most_common_key, highest_count) = cleaner
+        .providers
+        .iter()
+        .map(|(k, v)| (k, v.len()))
+        .max_by_key(|&(_, v)| v)
+        .unwrap();
+    let num_with_dup_keys = cleaner
+        .providers
+        .values()
+        .filter(|v| v.len() > 1)
+        .map(Vec::len)
+        .sum::<usize>();
+    assert!(
+        num_with_keys > num_without_keys * 4,
+        "very high number of providers have no keys: {num_without_keys}/{total}"
+    );
+    assert!(
+        highest_count < 5,
+        "key {most_common_key:?} is used by very high number of providers: {highest_count}"
+    );
+    assert!(
+        num_with_keys > num_with_dup_keys * 20,
+        "very high number of keys are duplicates: {num_with_dup_keys}/{num_with_keys}"
     );
 }
 

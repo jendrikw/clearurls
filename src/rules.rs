@@ -1,4 +1,5 @@
 use alloc::borrow::Cow;
+use alloc::borrow::ToOwned;
 use alloc::str::FromStr;
 use alloc::string::String;
 use alloc::vec::Vec;
@@ -76,6 +77,18 @@ impl Provider {
         self.url_pattern.is_match(url) && !self.match_exception(url)
     }
 
+    /// If this returns `Some(key)`, then `provider.match_url(url)` always returns false if `keys_from_url(url)` contains `key`. This is used to improve performance by eliminating most calls to `match_url`.
+    pub(crate) fn get_key(&self) -> Option<String> {
+        self
+            .url_pattern
+            .as_str()
+            .replace(r"\/", "/")
+            .replace(r"\-", "-")
+            .strip_prefix(r"^https?://(?:[a-z0-9-]+\.)*?")
+            .and_then(|s| key_iter(s, r"\.").next())
+            .map(ToOwned::to_owned)
+    }
+
     fn match_exception(&self, url: &str) -> bool {
         url == "javascript:void(0)" || self.exceptions.is_match(url)
     }
@@ -103,6 +116,27 @@ impl Provider {
             self.rules.iter().chain([].iter())
         }
     }
+}
+
+/// See `Provider::key`
+pub(crate) fn keys_from_url(url: &str) -> impl Iterator<Item = &str> {
+    url
+        .strip_prefix("http")
+        .map(|s| s.strip_prefix('s').unwrap_or(s))
+        .and_then(|s| s.strip_prefix("://"))
+        .into_iter()
+        .flat_map(|s| key_iter(s, "."))
+}
+
+fn key_iter<'a>(s: &'a str, delimiter: &'static str) -> impl Iterator<Item = &'a str> + 'a {
+    s
+        .split_inclusive(delimiter)
+        .filter_map(move |s| s.strip_suffix(delimiter))
+        .take_while(|&s| !s.is_empty() && s.chars().all(is_allowed_domain_char))
+}
+
+const fn is_allowed_domain_char(c: char) -> bool {
+    c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-'
 }
 
 fn serialize_params<'a>(
