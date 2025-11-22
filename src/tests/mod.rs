@@ -63,7 +63,10 @@ fn test_invalid_redirection() {
     };
     let err = provider
         .remove_fields_from_url(
-            &Url::from_str("https://google.co.uk/url?foo=bar&q=http%3A%2F%2Fexample.com%2Fimage.png&bar=foo").unwrap(),
+            &Url::from_str(
+                "https://google.co.uk/url?foo=bar&q=http%3A%2F%2Fexample.com%2Fimage.png&bar=foo",
+            )
+            .unwrap(),
             false,
         )
         .unwrap_err();
@@ -88,7 +91,10 @@ fn test_invalid_urldecode() {
     };
     // a byte F0 is not valid utf 8
     let err = provider
-        .remove_fields_from_url(&Url::from_str("https://google.co.uk/url?foo=bar&q=http%F0").unwrap(), false)
+        .remove_fields_from_url(
+            &Url::from_str("https://google.co.uk/url?foo=bar&q=http%F0").unwrap(),
+            false,
+        )
         .unwrap_err();
     assert_matches!(err, PercentDecodeUtf8Error(_));
     #[cfg(feature = "std")]
@@ -111,7 +117,8 @@ fn test_raw_rules_unchanged() {
         exceptions: RegexSet::default(),
         redirections: vec![],
     };
-    let res = provider.remove_fields_from_url(&Url::from_str("https://pantip.com/").unwrap(), false);
+    let res =
+        provider.remove_fields_from_url(&Url::from_str("https://pantip.com/").unwrap(), false);
     assert_eq!(res.unwrap().as_str(), "https://pantip.com/");
 }
 

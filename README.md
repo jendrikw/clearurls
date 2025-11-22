@@ -17,15 +17,14 @@ fn main() -> Result<(), clearurls::Error> {
 }
 ```
 
-
 ## Crate Features
 
 There is a `std` feature (enabled by default) to include utility functions to read from files,
 but the core logic doesn't depend on that and the crate is perfectly usable without `std`.
 
 ## Acknowledgements
-`data.minify.json` was downloaded from <https://github.com/ClearURLs/Rules>
 
+`data.minify.json` was downloaded from <https://github.com/ClearURLs/Rules>
 
 ## License
 

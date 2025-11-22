@@ -1,6 +1,6 @@
+use clearurls::{Error, UrlCleaner};
 use std::str::FromStr;
 use url::{ParseError, Url};
-use clearurls::{Error, UrlCleaner};
 
 #[test]
 fn test_single_url() {
@@ -26,8 +26,21 @@ fn test_single_url() {
     );
 
     // url encoded parameter that's not a url
-    assert!(matches!(cleaner.clear_single_url_str("https://www.google.com/url?q=http%3A%2F%2F%5B%3A%3A%3A1%5D").unwrap_err(), Error::UrlSyntax(ParseError::InvalidIpv6Address)));
-    assert!(matches!(cleaner.clear_single_url(&Url::from_str("https://www.google.com/url?q=http%3A%2F%2F%5B%3A%3A%3A1%5D").unwrap()).unwrap_err(), Error::UrlSyntax(ParseError::InvalidIpv6Address)));
+    assert!(matches!(
+        cleaner
+            .clear_single_url_str("https://www.google.com/url?q=http%3A%2F%2F%5B%3A%3A%3A1%5D")
+            .unwrap_err(),
+        Error::UrlSyntax(ParseError::InvalidIpv6Address)
+    ));
+    assert!(matches!(
+        cleaner
+            .clear_single_url(
+                &Url::from_str("https://www.google.com/url?q=http%3A%2F%2F%5B%3A%3A%3A1%5D")
+                    .unwrap()
+            )
+            .unwrap_err(),
+        Error::UrlSyntax(ParseError::InvalidIpv6Address)
+    ));
 
     // double url encoded parameter
     test(

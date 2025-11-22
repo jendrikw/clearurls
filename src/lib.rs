@@ -49,10 +49,8 @@
 // Rustdoc lints
 #![warn(rustdoc::broken_intra_doc_links)]
 #![warn(rustdoc::missing_crate_level_docs)]
-
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
-
 #![allow(clippy::doc_markdown)]
 //! This crate provides a solution to remove tracking parameters and other nuisance from URLs.
 //!
@@ -227,7 +225,6 @@ impl UrlCleaner {
         self.clear_text_with_linkfinder(s, &linkify::LinkFinder::new())
     }
 
-
     /// Clean all URLs in a text.
     ///
     /// This may involve
@@ -247,8 +244,8 @@ impl UrlCleaner {
         s: &'a str,
         finder: &linkify::LinkFinder,
     ) -> Result<Cow<'a, str>, alloc::vec::Vec<Error>> {
-        use alloc::vec::Vec;
         use alloc::string::String;
+        use alloc::vec::Vec;
 
         let mut spans = Vec::new();
         let mut errors = Vec::new();
@@ -287,14 +284,17 @@ impl UrlCleaner {
     /// The return value is `Ok(())` if there were no errors.
     /// Otherwise, the list of errors is returned as the `Err` value.
     #[cfg(feature = "markdown-it")]
-    pub fn clear_markdown(&self, doc: &mut markdown_it::Node) -> Result<(), alloc::vec::Vec<Error>> {
+    pub fn clear_markdown(
+        &self,
+        doc: &mut markdown_it::Node,
+    ) -> Result<(), alloc::vec::Vec<Error>> {
+        use alloc::string::String;
         use markdown_it::parser::inline::Text;
         use markdown_it::plugins::cmark::inline::autolink::Autolink;
         use markdown_it::plugins::cmark::inline::image::Image;
         use markdown_it::plugins::cmark::inline::link::Link;
         use markdown_it::plugins::extra::linkify::Linkified;
         use markdown_it::Node;
-        use alloc::string::String;
 
         fn replace_url(cleaner: &UrlCleaner, url: &mut String) -> Result<(), Error> {
             match cleaner.clear_single_url_str(url)? {

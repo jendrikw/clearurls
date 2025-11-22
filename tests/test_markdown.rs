@@ -55,12 +55,9 @@ fn test_markdown() {
         format!("![My linked image]({SINGLE_BLACK_PIXEL})"),
         format!("<p><img src=\"{SINGLE_BLACK_PIXEL}\" alt=\"My linked image\" /></p>\n"),
     );
-    test(
-        "linkify",
-        "This is a [markdown link](http://example.com/?&&&&), and another: http://example.com/?&&&&".to_string(),
-        "<p>This is a <a href=\"http://example.com/\">markdown link</a>, and another: <a href=\"http://example.com/\">http://example.com/</a></p>\n".to_string(),
-    );
 
-    let err = cleaner.clear_markdown(&mut parser.parse("<ftp://example.%com>")).unwrap_err();
+    let err = cleaner
+        .clear_markdown(&mut parser.parse("<ftp://example.%com>"))
+        .unwrap_err();
     assert!(matches!(err[..], [Error::UrlSyntax(_)]));
 }

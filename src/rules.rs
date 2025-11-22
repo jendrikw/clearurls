@@ -97,7 +97,8 @@ impl Provider {
         if strip_referral_marketing {
             self.rules.iter().chain(self.referral_marketing.iter())
         } else {
-            #[allow(clippy::iter_on_empty_collections)] // false positive, core::iter::empty() doesn't work because it has a different type
+            #[allow(clippy::iter_on_empty_collections)]
+            // false positive, core::iter::empty() doesn't work because it has a different type
             self.rules.iter().chain([].iter())
         }
     }
@@ -139,8 +140,7 @@ fn repeatedly_urldecode(s: &str) -> Result<Cow<'_, str>, Error> {
 }
 
 fn is_full_match(regex: &Regex, haystack: &str) -> bool {
-    let found = regex
-        .find(haystack);
+    let found = regex.find(haystack);
     #[allow(clippy::option_if_let_else)]
     match found {
         Some(m) => m.len() == haystack.len(),
