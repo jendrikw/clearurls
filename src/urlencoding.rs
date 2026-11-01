@@ -49,15 +49,10 @@ pub fn repeatedly_urldecode(s: &str) -> Cow<'_, str> {
             Cow::Borrowed(after) => {
                 // unchanged, so return now
                 debug_assert_eq!(before.as_bytes(), after);
-                return match core::str::from_utf8(after) {
-                    Ok(after) => {
-                        if after.starts_with("http") {
-                            before
-                        } else {
-                            Cow::Owned(["http://", after].join(""))
-                        }
-                    }
-                    Err(_) => before,
+                return if before.starts_with("http") {
+                    before
+                } else {
+                    Cow::Owned(["http://", &before].join(""))
                 };
             }
             Cow::Owned(after) => match String::from_utf8(after) {
@@ -88,4 +83,17 @@ pub fn search_params_to_string(params: &[SearchParam<'_>]) -> Option<String> {
         }
     }
     Some(res)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::repeatedly_urldecode;
+
+    #[test]
+    fn test_invalid_utf8_after_percent_decode() {
+        let input = "%FF";
+        let result = repeatedly_urldecode(input);
+
+        assert_eq!(result, "%FF");
+    }
 }

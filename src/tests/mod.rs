@@ -38,6 +38,24 @@ fn test_referral_marketing_setter() {
 }
 
 #[test]
+fn test_data_url() {
+    let cleaner = UrlCleaner::from_rules_str(r#"{"providers":{}}"#).unwrap();
+    assert_eq!(
+        cleaner.clear_single_url_str("data:foo:bar").unwrap(),
+        "data:foo:bar"
+    );
+}
+
+#[test]
+fn test_good_case() {
+    let cleaner = UrlCleaner::from_rules_str(r#"{"providers":{}}"#).unwrap();
+    assert_eq!(
+        cleaner.clear_single_url_str("steam://run").unwrap(),
+        "steam://run"
+    );
+}
+
+#[test]
 #[allow(clippy::trivial_regex)]
 fn test_strip_referral_marketing() {
     let provider = Provider {
@@ -101,7 +119,8 @@ fn test_invalid_urldecode() {
         .remove_fields_from_url(
             &Url::from_str("https://google.co.uk/url?foo=bar&q=http://example.com/%F0").unwrap(),
             false,
-        ).unwrap();
+        )
+        .unwrap();
     assert_matches!(url.as_str(), "http://example.com/%F0");
 }
 
@@ -122,22 +141,28 @@ fn test_raw_rules_unchanged() {
 
 #[test]
 #[allow(clippy::trivial_regex)]
+#[cfg(feature = "linkify")]
 fn test_raw_rules_produce_invalid_url() {
-    let provider = Provider {
-        url_pattern: Regex::new("https://example.com").unwrap(),
-        rules: vec![],
-        raw_rules: vec![Regex::new("https://").unwrap()],
-        referral_marketing: vec![],
-        exceptions: RegexSet::default(),
-        redirections: vec![],
+    let cleaner = UrlCleaner {
+        strip_referral_marketing: true,
+        rules: Rules {
+            providers: vec![Provider {
+                url_pattern: Regex::new("https://example.com").unwrap(),
+                rules: vec![],
+                raw_rules: vec![Regex::new("https://").unwrap()],
+                referral_marketing: vec![],
+                exceptions: RegexSet::default(),
+                redirections: vec![],
+            }],
+        },
     };
-    let err = provider
-        .remove_fields_from_url(&Url::from_str("https://example.com").unwrap(), false)
+    let err = cleaner
+        .clear_text("go to https://example.com!")
         .unwrap_err();
-    assert_matches!(err, Error::UrlSyntax(_));
+    assert_matches!(&err[..], &[Error::UrlSyntax(_)]);
     #[cfg(feature = "std")]
     {
-        assert_matches!(err, Error::UrlSyntax(ref inner) if error_ptr_eq(inner, err.source().unwrap()));
+        assert_matches!(&err[..], &[Error::UrlSyntax(ref inner)] if error_ptr_eq(inner, err[0].source().unwrap()));
     }
 }
 

@@ -16,7 +16,7 @@ fn test_markdown() {
     markdown_it::plugins::extra::linkify::add(&mut parser);
     let cleaner = UrlCleaner::from_embedded_rules().unwrap();
 
-    let test = |msg: &str, input: String, expected: String| {
+    let test = |msg: &str, input: &str, expected: &str| {
         let mut node = parser.parse(&input);
         cleaner
             .clear_markdown(&mut node)
@@ -31,33 +31,39 @@ fn test_markdown() {
 
     test(
         "angle bracket",
-        "<ftp://example.com/test/?utm_source=abc>".to_string(),
-        "<p><a href=\"ftp://example.com/test/\">ftp://example.com/test/</a></p>\n".to_string(),
+        "<ftp://example.com/test/?utm_source=abc>",
+        "<p><a href=\"ftp://example.com/test/\">ftp://example.com/test/</a></p>\n",
     );
     test(
         "angle bracket",
-        format!("<{SINGLE_BLACK_PIXEL}>"),
-        format!("<p><a href=\"{SINGLE_BLACK_PIXEL}\">{SINGLE_BLACK_PIXEL}</a></p>\n"),
+        &format!("<{SINGLE_BLACK_PIXEL}>"),
+        &format!("<p><a href=\"{SINGLE_BLACK_PIXEL}\">{SINGLE_BLACK_PIXEL}</a></p>\n"),
     );
     test(
         "links",
-        "[Goodreads](https://goodreads.com?qid=1 \"title\")".to_string(),
-        "<p><a href=\"https://goodreads.com/\" title=\"title\">Goodreads</a></p>\n".to_string(),
+        "[Goodreads](https://goodreads.com?qid=1 \"title\")",
+        "<p><a href=\"https://goodreads.com/\" title=\"title\">Goodreads</a></p>\n",
     );
     test(
         "links",
-        format!("[data url]({SINGLE_BLACK_PIXEL})"),
-        format!("<p><a href=\"{SINGLE_BLACK_PIXEL}\">data url</a></p>\n"),
+        &format!("[data url]({SINGLE_BLACK_PIXEL})"),
+        &format!("<p><a href=\"{SINGLE_BLACK_PIXEL}\">data url</a></p>\n"),
     );
     test(
         "images",
-        "![My linked image](https://duckduckgo.com/l/abc?uddg=http%3A%2F%2Fexample.com%2Fimage.png \"image alt text\")".to_string(),
-        "<p><img src=\"http://example.com/image.png\" alt=\"My linked image\" title=\"image alt text\" /></p>\n".to_string()
+        "![My linked image](https://duckduckgo.com/l/abc?uddg=http%3A%2F%2Fexample.com%2Fimage.png \"image alt text\")",
+        "<p><img src=\"http://example.com/image.png\" alt=\"My linked image\" title=\"image alt text\" /></p>\n",
     );
     test(
         "images",
-        format!("![My linked image]({SINGLE_BLACK_PIXEL})"),
-        format!("<p><img src=\"{SINGLE_BLACK_PIXEL}\" alt=\"My linked image\" /></p>\n"),
+        &format!("![My linked image]({SINGLE_BLACK_PIXEL})"),
+        &format!("<p><img src=\"{SINGLE_BLACK_PIXEL}\" alt=\"My linked image\" /></p>\n"),
+    );
+
+    test(
+        "linkified link",
+        "go check out my website: http://localhost:3000!",
+        "<p>go check out my website: <a href=\"http://localhost:3000/\">http://localhost:3000/</a>!</p>\n",
     );
 
     let err = cleaner
