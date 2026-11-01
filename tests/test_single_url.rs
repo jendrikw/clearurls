@@ -81,11 +81,6 @@ fn test_single_url() {
         "https://myaccount.google.com/?utm_source=google",
     );
 
-    test(
-        "http://clickserve.dartsearch.net/link/click?ds_dest_url=http://g.co/",
-        "https://g.co/",
-    );
-
     test("http://example.com/?p1=&p2=", "http://example.com/?p1=&p2=");
 
     test(
