@@ -4,7 +4,7 @@
 
 [package]
 name = "clearurls"
-version = "0.0.5"
+version = "0.0.6"
 edition = "2021"
 authors = ["jendrikw"]
 description = "Clear URLS from tracking parameters with crowd-sourced rules from https://clearurls.xyz"
@@ -22,10 +22,10 @@ linkify = ["dep:linkify"]
 
 [dependencies]
 serde = { version = "1.0.204", default-features = false, features = ["derive", "alloc"] }
-serde_json = { version = "1.0.154" , default-features = false, features = ["alloc"]}
+serde_json = { version = "1.0.154", default-features = false, features = ["alloc"] }
 regex = { version = "1.10.5", default-features = false, features = ["unicode"] }
-percent-encoding = { version = "2.3.2" , default-features = false, features = ["alloc"]}
-url = {  version = "2.5.8", default-features = false, features = [] }
+percent-encoding = { version = "2.3.2", default-features = false, features = ["alloc"] }
+url = { version = "2.5.8", default-features = false, features = [] }
 markdown-it = { version = "0.6.1", default-features = false, features = ["linkify"], optional = true }
 linkify = { version = "0.11.0", optional = true }
 
