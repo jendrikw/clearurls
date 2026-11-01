@@ -1,6 +1,10 @@
+// SPDX-FileCopyrightText: 2026 jendrikw
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 use super::*;
 use crate::rules::Provider;
-use crate::Error::{PercentDecodeUtf8Error, RedirectionHasNoCapturingGroup};
+use crate::Error::RedirectionHasNoCapturingGroup;
 use alloc::string::ToString;
 use alloc::vec;
 use regex::RegexSet;
@@ -12,6 +16,8 @@ use std::io::{Seek, SeekFrom, Write};
 
 const _: () = {
     const fn assert_auto_traits<T: Send + Sync + 'static>() {}
+    assert_auto_traits::<Rules>();
+    assert_auto_traits::<Provider>();
     assert_auto_traits::<UrlCleaner>();
     assert_auto_traits::<Error>();
 };
@@ -38,7 +44,7 @@ fn test_strip_referral_marketing() {
         url_pattern: Regex::new("https://example.com").unwrap(),
         rules: vec![],
         raw_rules: vec![],
-        referral_marketing: vec![Regex::new("ref").unwrap()],
+        referral_marketing: vec![regex::bytes::Regex::new("ref").unwrap()],
         exceptions: RegexSet::default(),
         redirections: vec![],
     };
@@ -56,7 +62,7 @@ fn test_invalid_redirection() {
         url_pattern: Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}").unwrap(),
         rules: vec![],
         raw_rules: vec![],
-        referral_marketing: vec![Regex::new("ref").unwrap()],
+        referral_marketing: vec![regex::bytes::Regex::new("ref").unwrap()],
         exceptions: RegexSet::default(),
         // this regex is missing a capturing group around the last https...
         redirections: vec![Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}/url\\?.*?(?:url|q)=https?[^&]+").unwrap()],
@@ -79,34 +85,25 @@ fn test_invalid_redirection() {
 }
 
 //noinspection RegExpSimplifiable
-#[test]
-#[allow(clippy::trivial_regex)]
-fn test_invalid_urldecode() {
-    let provider = Provider {
-        url_pattern: Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}").unwrap(),
-        rules: vec![],
-        raw_rules: vec![],
-        referral_marketing: vec![Regex::new("ref").unwrap()],
-        exceptions: RegexSet::default(),
-        redirections: vec![Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}/url\\?.*?(?:url|q)=(https?[^&]+)").unwrap()],
-    };
-    // a byte F0 is not valid utf 8
-    let err = provider
-        .remove_fields_from_url(
-            &Url::from_str("https://google.co.uk/url?foo=bar&q=http%F0").unwrap(),
-            false,
-        )
-        .unwrap_err();
-    assert_matches!(err, PercentDecodeUtf8Error(_));
-    #[cfg(feature = "std")]
-    {
-        assert_matches!(err, PercentDecodeUtf8Error(ref inner) if error_ptr_eq(inner, err.source().unwrap()));
-    }
-    assert_eq!(
-        err.to_string(),
-        "percent decoding resulted in non-UTF-8 bytes: incomplete utf-8 byte sequence from index 4"
-    );
-}
+// #[test]
+// #[allow(clippy::trivial_regex)]
+// fn test_invalid_urldecode() {
+//     let provider = Provider {
+//         url_pattern: Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}").unwrap(),
+//         rules: vec![],
+//         raw_rules: vec![],
+//         referral_marketing: vec![regex::bytes::Regex::new("ref").unwrap()],
+//         exceptions: RegexSet::default(),
+//         redirections: vec![Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}/url\\?.*?(?:url|q)=(https?[^&]+)").unwrap()],
+//     };
+//     // a byte F0 is not valid utf 8
+//     let url = provider
+//         .remove_fields_from_url(
+//             &Url::from_str("https://google.co.uk/url?foo=bar&q=http://example.com/%F0").unwrap(),
+//             false,
+//         ).unwrap();
+//     assert_matches!(url.as_str(), "http://example.com/%F0");
+// }
 
 #[test]
 fn test_raw_rules_unchanged() {

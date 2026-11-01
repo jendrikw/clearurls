@@ -1,6 +1,10 @@
+# SPDX-FileCopyrightText: 2026 jendrikw
+#
+# SPDX-License-Identifier: LGPL-3.0-only
+
 [package]
 name = "clearurls"
-version = "0.0.4"
+version = "0.0.5"
 edition = "2021"
 authors = ["jendrikw"]
 description = "Clear URLS from tracking parameters with crowd-sourced rules from https://clearurls.xyz"
@@ -11,7 +15,7 @@ license = "LGPL-3.0-only"
 rust-version = "1.65.0"
 
 [features]
-std = ["serde/std", "serde_json/std", "regex/std"]
+std = ["serde/std", "serde_json/std", "regex/std", "url/std"]
 default = ["std"]
 markdown-it = ["dep:markdown-it", "dep:linkify", "std"]
 linkify = ["dep:linkify"]
@@ -20,8 +24,8 @@ linkify = ["dep:linkify"]
 serde = { version = "1.0.204", default-features = false, features = ["derive", "alloc"] }
 serde_json = { version = "1.0.122" , default-features = false, features = ["alloc"]}
 regex = { version = "1.10.5", default-features = false, features = ["unicode"] }
-percent-encoding = { version = "2.3.1" , default-features = false, features = ["alloc"]}
-url = "2.5.2"
+percent-encoding = { version = "2.3.2" , default-features = false, features = ["alloc"]}
+url = {  version = "2.5.8", default-features = false, features = [] }
 markdown-it = { version = "0.6.1", default-features = false, features = ["linkify"], optional = true }
 linkify = { version = "0.10.0", optional = true }
 

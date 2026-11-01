@@ -1,34 +1,38 @@
+// SPDX-FileCopyrightText: 2026 jendrikw
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 use alloc::borrow::Cow;
 use alloc::fmt;
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-use regex::{Regex, RegexBuilder, RegexSet, RegexSetBuilder};
+use crate::generic_regex::{GenericRegex, GenericRegexBuilder};
+use regex::{RegexSet, RegexSetBuilder};
 use serde::de::{Error as _, IgnoredAny, MapAccess, SeqAccess, Visitor};
 use serde::{Deserialize, Deserializer};
 
 /// Deserialize a [`Regex`]
 /// The result will have the `case_insensitive` flag set.
-pub(crate) fn deserialize_regex<'de, D>(d: D) -> Result<Regex, D::Error>
+pub(crate) fn deserialize_regex<'de, D, R>(d: D) -> Result<R, D::Error>
 where
     D: Deserializer<'de>,
+    R: GenericRegex,
 {
     let s = <Cow<'_, str>>::deserialize(d)?;
-    RegexBuilder::new(&s)
-        .case_insensitive(true)
-        .build()
-        .map_err(D::Error::custom)
+    R::Builder::build(&s).map_err(D::Error::custom)
 }
 
 /// Deserialize a [`Vec<Regex>`].
 /// All regexes will have the `case_insensitive` flag set.
-pub(crate) fn deserialize_regex_vec<'de, D>(d: D) -> Result<Vec<Regex>, D::Error>
+pub(crate) fn deserialize_regex_vec<'de, D, R>(d: D) -> Result<Vec<R>, D::Error>
 where
     D: Deserializer<'de>,
+    R: GenericRegex,
 {
-    struct RegexVecVisitor;
-    impl<'a> Visitor<'a> for RegexVecVisitor {
-        type Value = Vec<Regex>;
+    struct RegexVecVisitor<R: GenericRegex>(PhantomData<R>);
+    impl<'a, R: GenericRegex> Visitor<'a> for RegexVecVisitor<R> {
+        type Value = Vec<R>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
             formatter.write_str("valid sequence")
@@ -41,17 +45,14 @@ where
             let cap = seq.size_hint().unwrap_or(0);
             let mut vec = Vec::with_capacity(cap);
             while let Some(el) = seq.next_element::<Cow<'_, str>>()? {
-                let regex = RegexBuilder::new(&el)
-                    .case_insensitive(true)
-                    .build()
-                    .map_err(A::Error::custom)?;
+                let regex = R::Builder::build(&el).map_err(A::Error::custom)?;
                 vec.push(regex);
             }
             Ok(vec)
         }
     }
 
-    d.deserialize_seq(RegexVecVisitor)
+    d.deserialize_seq(RegexVecVisitor::<R>(PhantomData))
 }
 
 /// Deserialize a [`RegexSet`].
@@ -105,13 +106,13 @@ mod tests {
 
     #[test]
     fn test_deserialize_regex() {
-        let regex = deserialize_regex(json!("a")).unwrap();
+        let regex: regex::Regex = deserialize_regex(json!("a")).unwrap();
         assert!(regex.is_match("A"));
-        let error = deserialize_regex(json!("[")).unwrap_err();
+        let error = deserialize_regex::<_, regex::Regex>(json!("[")).unwrap_err();
         assert_eq!(error.classify(), Category::Data);
-        let error = deserialize_regex(json!(true)).unwrap_err();
+        let error = deserialize_regex::<_, regex::Regex>(json!(true)).unwrap_err();
         assert_eq!(error.classify(), Category::Data);
-        let error = deserialize_regex(json!([])).unwrap_err();
+        let error = deserialize_regex::<_, regex::Regex>(json!([])).unwrap_err();
         assert_eq!(error.classify(), Category::Data);
     }
 
@@ -127,11 +128,11 @@ mod tests {
 
     #[test]
     fn test_deserialize_regex_vec_error() {
-        let error = deserialize_regex_vec(json!([".*", 1])).unwrap_err();
+        let error = deserialize_regex_vec::<_, regex::Regex>(json!([".*", 1])).unwrap_err();
         assert_eq!(error.classify(), Category::Data);
-        let error = deserialize_regex_vec(json!("")).unwrap_err();
+        let error = deserialize_regex_vec::<_, regex::Regex>(json!("")).unwrap_err();
         assert_eq!(error.classify(), Category::Data);
-        let error = deserialize_regex_vec(json!(["["])).unwrap_err();
+        let error = deserialize_regex_vec::<_, regex::Regex>(json!(["["])).unwrap_err();
         assert_eq!(error.classify(), Category::Data);
     }
 

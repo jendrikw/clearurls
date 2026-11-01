@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 jendrikw
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 // Rustc lints
 #![forbid(unsafe_code)]
 #![warn(elided_lifetimes_in_associated_constant)]
@@ -81,17 +85,19 @@ extern crate std;
 
 use alloc::borrow::Cow;
 use core::fmt::{Display, Formatter};
-use core::str::{FromStr, Utf8Error};
+use core::str::FromStr;
 use regex::Regex;
 use url::{ParseError, Url};
 
 use rules::Rules;
 
 mod deserialize_utils;
+mod generic_regex;
 mod rules;
 #[cfg(test)]
 #[allow(clippy::mod_module_files)]
 mod tests;
+mod urlencoding;
 
 /// A [`UrlCleaner`] can remove tracking parameters from URLs.
 ///
@@ -356,8 +362,6 @@ pub enum Error {
     UrlSyntax(ParseError),
     /// The rules contained a redirection regex that doesn't specify the target
     RedirectionHasNoCapturingGroup(Regex),
-    /// Bytes that are invalid UTF-8
-    PercentDecodeUtf8Error(Utf8Error),
 }
 
 impl Display for Error {
@@ -369,9 +373,6 @@ impl Display for Error {
             Self::UrlSyntax(x) => write!(f, "error parsing url: {x}"),
             Self::RedirectionHasNoCapturingGroup(x) => {
                 write!(f, "redirection regex {x} has no capture group")
-            }
-            Self::PercentDecodeUtf8Error(x) => {
-                write!(f, "percent decoding resulted in non-UTF-8 bytes: {x}")
             }
         }
     }
@@ -396,12 +397,6 @@ impl From<ParseError> for Error {
     }
 }
 
-impl From<Utf8Error> for Error {
-    fn from(value: Utf8Error) -> Self {
-        Self::PercentDecodeUtf8Error(value)
-    }
-}
-
 #[cfg(feature = "std")]
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
@@ -410,7 +405,6 @@ impl std::error::Error for Error {
             Self::RuleSyntax(e) => Some(e),
             Self::UrlSyntax(e) => Some(e),
             Self::RedirectionHasNoCapturingGroup(_) => None,
-            Self::PercentDecodeUtf8Error(e) => Some(e),
         }
     }
 }

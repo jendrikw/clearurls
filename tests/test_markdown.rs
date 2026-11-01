@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 jendrikw
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 #[cfg(feature = "markdown-it")]
 #[test]
 fn test_markdown() {

@@ -1,7 +1,10 @@
+// SPDX-FileCopyrightText: 2026 jendrikw
+//
+// SPDX-License-Identifier: LGPL-3.0-only
+
 #[cfg(feature = "linkify")]
 #[test]
 fn test_linkify() {
-    use clearurls::Error;
     use clearurls::UrlCleaner;
 
     let cleaner = UrlCleaner::from_embedded_rules().unwrap();
@@ -29,9 +32,9 @@ fn test_linkify() {
         "This is a [markdown link](http://example.com/), and another: http://example.com/",
     );
 
-    let err = cleaner.clear_text("This is a [markdown link](http://example.com/?&&&&), and another: https://google.co.uk/url?foo=bar&q=http%F0");
-    assert!(matches!(
-        err.unwrap_err()[..],
-        [Error::PercentDecodeUtf8Error(_)]
-    ));
+    test(
+        "redirection",
+        "test: https://google.co.uk/url?foo=bar&q=http://example.com/%F0",
+        "test: http://example.com/%F0",
+    );
 }
