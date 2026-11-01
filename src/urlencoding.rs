@@ -3,19 +3,12 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 
 use alloc::borrow::Cow;
-use alloc::vec::Vec;
 use alloc::string::String;
-use percent_encoding::{
-    percent_decode, percent_decode_str, percent_encode, AsciiSet, NON_ALPHANUMERIC,
-};
+use alloc::vec::Vec;
+use percent_encoding::{percent_decode, percent_decode_str};
+use url::form_urlencoded::byte_serialize;
 
 pub(crate) type SearchParam<'a> = (Cow<'a, [u8]>, Option<Cow<'a, [u8]>>);
-
-const FORM_URL_ENCODED_ASCII_SET: AsciiSet = NON_ALPHANUMERIC
-    .remove(b'*')
-    .remove(b'-')
-    .remove(b'.')
-    .remove(b'_');
 
 #[allow(clippy::option_if_let_else)]
 pub fn parse_query_parameters(s: &[u8]) -> Vec<SearchParam<'_>> {
@@ -39,11 +32,9 @@ fn parse_param(input: &[u8]) -> Cow<'_, [u8]> {
     }
 
     let mut output = Vec::with_capacity(input.len());
-    let mut first = true;
-    for part in input.split(|b| *b == b'+') {
-        if !first {
+    for (i, part) in input.split(|b| *b == b'+').enumerate() {
+        if i > 0 {
             output.push(b' ');
-            first = false;
         }
         output.extend(percent_decode(part));
     }
@@ -57,6 +48,7 @@ pub fn repeatedly_urldecode(s: &str) -> Cow<'_, str> {
         match after {
             Cow::Borrowed(after) => {
                 // unchanged, so return now
+                debug_assert_eq!(before.as_bytes(), after);
                 return match core::str::from_utf8(after) {
                     Ok(after) => {
                         if after.starts_with("http") {
@@ -89,10 +81,10 @@ pub fn search_params_to_string(params: &[SearchParam<'_>]) -> Option<String> {
         if i > 0 {
             res.push('&');
         }
-        res.extend(percent_encode(k.as_ref(), &FORM_URL_ENCODED_ASCII_SET));
+        res.extend(byte_serialize(k));
         if let Some(v) = v {
             res.push('=');
-            res.extend(percent_encode(v.as_ref(), &FORM_URL_ENCODED_ASCII_SET));
+            res.extend(byte_serialize(v));
         }
     }
     Some(res)

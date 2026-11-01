@@ -103,20 +103,12 @@ fn test_single_url() {
         "data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==",
         "data:text/plain;base64,SGVsbG8sIFdvcmxkIQ==",
     );
-}
-
-#[test]
-fn test_degree_sign_percent_encoded() {
-    let cleaner = UrlCleaner::from_embedded_rules().unwrap();
-    let test = |original: &str, expected: &str| {
-        let result = cleaner.clear_single_url_str(original).unwrap();
-        assert_eq!(result, expected);
-        let url = Url::from_str(original).unwrap();
-        let result = cleaner.clear_single_url(&url).unwrap();
-        assert_eq!(result.as_str(), expected);
-    };
     test(
         "https://example.com/query?peers=5%B02%27",
         "https://example.com/query?peers=5%B02%27",
     );
+    test(
+        "https://example.com/path/123?user+name=random+user&id=123",
+        "https://example.com/path/123?user+name=random+user&id=123",
+    )
 }
