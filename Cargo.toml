@@ -12,22 +12,22 @@ categories = ["network-programming", "web-programming"]
 keywords = ["clean", "clear", "url"]
 repository = "https://github.com/jendrikw/clearurls"
 license = "LGPL-3.0-only"
-rust-version = "1.65.0"
+rust-version = "1.88.0"
 
 [features]
-std = ["serde/std", "serde_json/std", "regex/std", "url/std"]
+std = ["serde/std", "serde_json/std", "regex/std"]
 default = ["std"]
 markdown-it = ["dep:markdown-it", "dep:linkify", "std"]
 linkify = ["dep:linkify"]
 
 [dependencies]
 serde = { version = "1.0.204", default-features = false, features = ["derive", "alloc"] }
-serde_json = { version = "1.0.122" , default-features = false, features = ["alloc"]}
+serde_json = { version = "1.0.154" , default-features = false, features = ["alloc"]}
 regex = { version = "1.10.5", default-features = false, features = ["unicode"] }
 percent-encoding = { version = "2.3.2" , default-features = false, features = ["alloc"]}
 url = {  version = "2.5.8", default-features = false, features = [] }
 markdown-it = { version = "0.6.1", default-features = false, features = ["linkify"], optional = true }
-linkify = { version = "0.10.0", optional = true }
+linkify = { version = "0.11.0", optional = true }
 
 [dev-dependencies]
 tempfile = "3.11.0"
