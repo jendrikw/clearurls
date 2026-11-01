@@ -84,26 +84,26 @@ fn test_invalid_redirection() {
     }
 }
 
-//noinspection RegExpSimplifiable
-// #[test]
-// #[allow(clippy::trivial_regex)]
-// fn test_invalid_urldecode() {
-//     let provider = Provider {
-//         url_pattern: Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}").unwrap(),
-//         rules: vec![],
-//         raw_rules: vec![],
-//         referral_marketing: vec![regex::bytes::Regex::new("ref").unwrap()],
-//         exceptions: RegexSet::default(),
-//         redirections: vec![Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}/url\\?.*?(?:url|q)=(https?[^&]+)").unwrap()],
-//     };
-//     // a byte F0 is not valid utf 8
-//     let url = provider
-//         .remove_fields_from_url(
-//             &Url::from_str("https://google.co.uk/url?foo=bar&q=http://example.com/%F0").unwrap(),
-//             false,
-//         ).unwrap();
-//     assert_matches!(url.as_str(), "http://example.com/%F0");
-// }
+// noinspection RegExpSimplifiable
+#[test]
+#[allow(clippy::trivial_regex)]
+fn test_invalid_urldecode() {
+    let provider = Provider {
+        url_pattern: Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}").unwrap(),
+        rules: vec![],
+        raw_rules: vec![],
+        referral_marketing: vec![regex::bytes::Regex::new("ref").unwrap()],
+        exceptions: RegexSet::default(),
+        redirections: vec![Regex::new("^https?://(?:[a-z0-9-]+\\.)*?google(?:\\.[a-z]{2,}){1,}/url\\?.*?(?:url|q)=(https?[^&]+)").unwrap()],
+    };
+    // a byte F0 is not valid utf 8
+    let url = provider
+        .remove_fields_from_url(
+            &Url::from_str("https://google.co.uk/url?foo=bar&q=http://example.com/%F0").unwrap(),
+            false,
+        ).unwrap();
+    assert_matches!(url.as_str(), "http://example.com/%F0");
+}
 
 #[test]
 fn test_raw_rules_unchanged() {
