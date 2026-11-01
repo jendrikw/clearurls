@@ -110,5 +110,11 @@ fn test_single_url() {
     test(
         "https://example.com/path/123?user+name=random+user&id=123",
         "https://example.com/path/123?user+name=random+user&id=123",
+    );
+
+    // test case from lemmy
+    test(
+        "https://example.com/path/123?utm_content=buffercf3b2&utm_medium=social&user+name=random+user&id=123",
+        "https://example.com/path/123?user+name=random+user&id=123"
     )
 }
