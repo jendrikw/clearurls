@@ -4,10 +4,10 @@
 
 use alloc::borrow::Cow;
 use alloc::vec::Vec;
+use alloc::string::String;
 use percent_encoding::{
     percent_decode, percent_decode_str, percent_encode, AsciiSet, NON_ALPHANUMERIC,
 };
-use std::prelude::rust_2015::String;
 
 pub(crate) type SearchParam<'a> = (Cow<'a, [u8]>, Option<Cow<'a, [u8]>>);
 
